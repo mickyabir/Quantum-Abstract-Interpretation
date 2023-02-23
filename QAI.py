@@ -2,11 +2,20 @@ import numpy as np
 
 tol = 1e-16
 
+ctr = 0
+
 class AbstractState():
     def __init__(self, n, S, projections):
         self.n = n
         self.S = S
         self.projections = projections
+
+    def __repr__(self):
+        retStr = ""
+        retStr += f"Abstract State:\n\nn: {self.n}\n"
+        for i in range(len(self.projections)):
+            retStr += f"\n{self.S[i]}\n<->\n{self.projections[i]}\n\n"
+        return retStr
 
 def generateQubitRotateUnitary(n, i):
     if n == 1:
@@ -114,14 +123,15 @@ def expandUnitary(U, n, F):
         fullUnitary = np.kron(fullUnitary, I)
 
     fullUnitaryLeftSwap = np.matmul(fullSwapUnitary, fullUnitary)
-    fullUnitary = np.matmul(fullUnitary, fullSwapUnitary)
+    # fullUnitary = np.matmul(fullUnitary, fullSwapUnitary)
+    fullUnitary = np.matmul(fullUnitaryLeftSwap, fullSwapUnitary)
     return fullUnitary
 
 def intersectProjections(projections, tj):
     expandedUnion = None
     for p in projections:
         if expandedUnion is None:
-            expandedUnion = p
+            expandedUnion = p.copy()
         else:
             expandedUnion += p
 
@@ -129,11 +139,14 @@ def intersectProjections(projections, tj):
     complementSupport = getSupport(fullComplementUnion)
     complementSupportMatrix = getMatrixFromSpan(complementSupport)
 
-    # complementSupportMatrix[abs(complementSupportMatrix) < tol] = 0.0
     complementSupportMatrix.real[abs(complementSupportMatrix.real) < tol] = 0.0
     complementSupportMatrix.imag[abs(complementSupportMatrix.imag) < tol] = 0.0
 
-    return np.identity(2 ** len(tj)) - complementSupportMatrix
+    finalSupportMatrix = np.identity(2 ** len(tj)) - complementSupportMatrix
+    finalSupportMatrix.real[abs(finalSupportMatrix.real) < tol] = 0.0
+    finalSupportMatrix.imag[abs(finalSupportMatrix.imag) < tol] = 0.0
+
+    return finalSupportMatrix
 
 def gammaFunction(state, T):
     Q = []
@@ -152,6 +165,12 @@ def gammaFunction(state, T):
                 expandedProjection = expandUnitary(state.projections[i], len(T[j]), mappedS)
                 projectionIntersectionList.append(expandedProjection)
 
+        global ctr
+        ctr += 1
+        if ctr == 5:
+            # import pdb
+            # pdb.set_trace()
+            pass
         Q.append(intersectProjections(projectionIntersectionList, T[j]))
 
     return AbstractState(state.n, T, Q)
@@ -198,10 +217,16 @@ def abstractStep(state, U, F):
     for si in state.S:
         T.append(list(set(si).union(set(F))))
 
+    print('######################################\n\n')
     concreteState = gammaFunction(state, T)
+    print(f'Concrete State:\n{concreteState}')
 
     evolvedState = applyGate(concreteState, U, F)
+    print(f'Evolved Concrete State:\n{evolvedState}')
+
     evolvedAbstractState = alphaFunction(evolvedState, state.S)
+    print(f'Evolved Abstract State:\n{evolvedAbstractState}')
+    print('######################################\n\n')
     return evolvedAbstractState
 
 # from https://stackoverflow.com/questions/21030391/how-to-normalize-a-numpy-array-to-a-unit-vector
@@ -223,11 +248,11 @@ def gramSchmidt(vectors):
         for j in range(0, i):
             proj = vecotrProjection(vectors[i], vectors[j])
             u_i = u_i - proj
-            # u_i[abs(u_i) < tol] = 0.0
             u_i.real[abs(u_i.real) < tol] = 0.0
             u_i.imag[abs(u_i.imag) < tol] = 0.0
 
-        u_vectors.append(u_i)
+        if u_i.any():
+            u_vectors.append(u_i)
 
     e_vectors = [u / np.sqrt(np.dot(u.T, u).item()) for u in u_vectors]
 
@@ -239,21 +264,23 @@ def getSupport(A):
     vectors = []
     for i in range(len(w)):
         if w[i] > 0:
-            # vectors.append(normalized(v[:, i]) / np.sqrt(w[i]))
-            # vectors.append(normalized(v[:, i]))
-            vectors.append(v[:, i])
+            vector = v[:, i]
+            vector.real[abs(vector.real) < tol] = 0.0
+            vector.imag[abs(vector.imag) < tol] = 0.0
+            vectors.append(vector)
 
     return vectors
 
 def getMatrixFromSpan(span):
     dim = span[0].shape[0]
+    # P_span = np.matrix(np.zeros((dim, dim)), dtype=complex)
     P_span = np.matrix(np.zeros((dim, dim)), dtype=complex)
 
     # Gram Schmidt
     # TODO: Might be not necessary
     orthonorm_span = gramSchmidt(span)
 
-    for i in range(len(span)):
+    for i in range(len(orthonorm_span)):
         P_span[:, i] = orthonorm_span[i]
 
     return P_span * P_span.conj().T
@@ -271,56 +298,30 @@ def intersectSupports(suppA, suppB):
     supp_comp_union = getSupport(P_A_comp + P_B_comp)
 
     P_comp_union = getMatrixFromSpan(supp_comp_union)
-    # P_comp_union[abs(P_comp_union) < tol] = 0.0
 
     P_intersect = I - P_comp_union
 
-    #TODO: Check that this works
-    # P_intersect[abs(P_intersect) < tol] = 0.0
     P_intersect.real[abs(P_intersect.real) < tol] = 0.0
     P_intersect.imag[abs(P_intersect.imag) < tol] = 0.0
 
     return P_intersect
 
 if __name__ == '__main__':
-    # logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-
-    # A = np.matrix([[1, 0, 0, 1], [0, 1, 0, 0], [0, 0, 0, 0], [1, 0, 0, 1]])
-    # B = np.matrix([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
-    # logging.debug(f'\nA:\n{A}\n')
-    # logging.debug(f'\nA:\n{B}\n')
-    # suppA = getSupport(A)
-    # suppB = getSupport(B)
-    # logging.debug(f'\nsuppA:\n{suppA}\n')
-    # logging.debug(f'\nsuppB:\n{suppB}\n')
-
-    # P_intersect = intersectSupports(suppA, suppB)
-    # P_intersect_support = getSupport(P_intersect)
-    # logging.debug(f'\nP_intersect_support:\n{P_intersect_support}\n')
-    # U = np.matrix([[0, 1],[1, 0]])
-    # n = 3
-    # F = [1]
-    # U = np.matrix([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
-    # n = 3
-    # F = [0, 1]
-    # fullUnitary = expandUnitary(U, n, F)
-    # print(fullUnitary)
-
-    # M = np.matrix([[0.5, 0, 0, 0.5], [0, 0, 0, 0], [0, 0, 0, 0], [0.5, 0, 0, 0.5]])
-    # n = 2
-    # F = [0]
-    # p = partialTrace(M, n, F)
-    # print(p)
-
     initial_proj = np.matrix([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
     initial_state = AbstractState(3, [[0, 1], [0, 2], [1, 2]], [initial_proj, initial_proj, initial_proj])
 
     H = 1/np.sqrt(2) * np.matrix([[1, 1],[1, -1]], dtype=complex)
+    X = np.matrix([[0, 1],[1, 0]], dtype=complex)
+
+    print(initial_state)
+
     state1 = abstractStep(initial_state, H, [0])
+    print(state1)
+
+    # import pdb
+    # pdb.set_trace()
     state2 = abstractStep(state1, H, [1])
+    print(state2)
 
-    for p in state2.projections:
-        print(p)
-        print()
-
-
+    state3 = abstractStep(state2, X, [2])
+    print(state2)
