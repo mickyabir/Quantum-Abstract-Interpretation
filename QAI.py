@@ -1,8 +1,6 @@
 import numpy as np
 
-tol = 1e-16
-
-ctr = 0
+tol = 1e-14
 
 class AbstractState():
     def __init__(self, n, S, projections):
@@ -17,13 +15,13 @@ class AbstractState():
             retStr += f"\n{self.S[i]}\n<->\n{self.projections[i]}\n\n"
         return retStr
 
-def generateQubitRotateUnitary(n, i):
+def generateQubitRightRotateUnitary(n, i):
     if n == 1:
         return np.identity(2)
 
     getBin = lambda x, n: format(x, 'b').zfill(n)
 
-    ketMap = {'0': np.matrix([[1, 0]]), '1': np.matrix([[0, 1]])}
+    ketMap = {'0': np.array([1, 0]), '1': np.array([0, 1])}
 
     rotateUnitary = None
     for k in range(2 ** n):
@@ -49,13 +47,46 @@ def generateQubitRotateUnitary(n, i):
 
     return rotateUnitary
 
+def generateQubitLeftRotateUnitary(n, i):
+    if n == 1:
+        return np.identity(2)
+
+    getBin = lambda x, n: format(x, 'b').zfill(n)
+
+    ketMap = {'0': np.array([1, 0]), '1': np.array([0, 1])}
+
+    rotateUnitary = None
+    for k in range(2 ** n):
+        binaryStringK = getBin(k, n)
+        rotateUnitaryRow = None
+        for l in range(len(binaryStringK)):
+            elem = None
+
+            if l > i:
+                elem = binaryStringK[l]
+            else: 
+                elem = binaryStringK[(l - i) % (i + 1)]
+
+            if rotateUnitaryRow is None:
+                rotateUnitaryRow = ketMap[elem]
+            else:
+                rotateUnitaryRow = np.kron(rotateUnitaryRow, ketMap[elem])
+
+        if rotateUnitary is None:
+            rotateUnitary = rotateUnitaryRow
+        else:
+            rotateUnitary = np.vstack((rotateUnitary, rotateUnitaryRow))
+
+    return rotateUnitary
+
+
 def generateQubitSwapUnitary(n, i, j):
     if n == 1:
         return np.identity(2)
 
     getBin = lambda x, n: format(x, 'b').zfill(n)
 
-    ketMap = {'0': np.matrix([[1, 0]]), '1': np.matrix([[0, 1]])}
+    ketMap = {'0': np.array([1, 0]), '1': np.array([0, 1])}
 
     swapUnitary = None
     for k in range(2 ** n):
@@ -83,6 +114,40 @@ def generateQubitSwapUnitary(n, i, j):
 
     return swapUnitary
 
+def generateQubitSwapFrontUnitary(n, F):
+    if n == 1:
+        return np.identity(2)
+
+    getBin = lambda x, n: format(x, 'b').zfill(n)
+
+    ketMap = {'0': np.array([1, 0]), '1': np.array([0, 1])}
+
+    indexMap = {F[i]:i for i in range(len(F))}
+    indexMapReverse = {i:F[i] for i in range(len(F))}
+    indexMap.update(indexMapReverse)
+
+    swapUnitary = None
+    for k in range(2 ** n):
+        binaryStringK = getBin(k, n)
+        swapUnitaryRow = None
+        for l in range(len(binaryStringK)):
+            if l in indexMap.keys():
+                elem = binaryStringK[indexMap[l]]
+            else:
+                elem = binaryStringK[l]
+
+            if swapUnitaryRow is None:
+                swapUnitaryRow = ketMap[elem]
+            else:
+                swapUnitaryRow = np.kron(swapUnitaryRow, ketMap[elem])
+
+        if swapUnitary is None:
+            swapUnitary = swapUnitaryRow
+        else:
+            swapUnitary = np.vstack((swapUnitary, swapUnitaryRow))
+
+    return swapUnitary
+
 # Trace out qubits in F from M, for n qubit system
 def partialTrace(M, n, F):
     currentSystemSize = n
@@ -91,7 +156,7 @@ def partialTrace(M, n, F):
     for i in F:
         firstSwap = generateQubitSwapUnitary(currentSystemSize, 0, i)
 
-        currentMatrix = np.matmul(firstSwap, currentMatrix)
+        currentMatrix = firstSwap @ currentMatrix
 
         A = currentMatrix[0:int(M.shape[0]/2), 0:int(M.shape[1]/2)]
         D = currentMatrix[int(M.shape[0]/2):int(M.shape[0]), int(M.shape[1]/2):int(M.shape[1])]
@@ -99,8 +164,8 @@ def partialTrace(M, n, F):
         currentMatrix = A + D
 
         currentSystemSize -= 1
-        rotateUndo = generateQubitRotateUnitary(currentSystemSize, i - 1)
-        currentMatrix = np.matmul(rotateUndo, currentMatrix)
+        rotateUndo = generateQubitRightRotateUnitary(currentSystemSize, i - 1)
+        currentMatrix = rotateUndo @ currentMatrix
 
     return currentMatrix
 
@@ -109,22 +174,17 @@ def partialTrace(M, n, F):
 # F is the ordered list of qubits that U applies to
 # For now, assume F[i] < F[j] for i < j
 def expandUnitary(U, n, F):
-    fullSwapUnitary = None
-    for i in range(len(F)):
-        swapGate = generateQubitSwapUnitary(n, i, F[i])
-        if fullSwapUnitary is None:
-            fullSwapUnitary = swapGate
-        else:
-            fullSwapUnitary = np.matmul(fullSwapUnitary, swapGate)
-
     I = np.identity(2)
     fullUnitary = U
+
     for i in range(len(F), n):
         fullUnitary = np.kron(fullUnitary, I)
 
-    fullUnitaryLeftSwap = np.matmul(fullSwapUnitary, fullUnitary)
-    # fullUnitary = np.matmul(fullUnitary, fullSwapUnitary)
-    fullUnitary = np.matmul(fullUnitaryLeftSwap, fullSwapUnitary)
+    for i in range(0, len(F)):
+        k = len(F) - i - 1
+        swapGate = generateQubitSwapUnitary(n, k, F[k])
+        fullUnitary = swapGate @ fullUnitary @ swapGate
+
     return fullUnitary
 
 def intersectProjections(projections, tj):
@@ -165,18 +225,12 @@ def gammaFunction(state, T):
                 expandedProjection = expandUnitary(state.projections[i], len(T[j]), mappedS)
                 projectionIntersectionList.append(expandedProjection)
 
-        global ctr
-        ctr += 1
-        if ctr == 5:
-            # import pdb
-            # pdb.set_trace()
-            pass
         Q.append(intersectProjections(projectionIntersectionList, T[j]))
 
     return AbstractState(state.n, T, Q)
 
 def applyGate(state, U, F):
-    applyGateToProjection = lambda U, p: np.matmul(U, np.matmul(p, U.conj().T))
+    applyGateToProjection = lambda U, p: U @ p @ U.conj().T
     evolvedProjections = []
     for i in range(len(state.S)):
         forwardMap = {state.S[i][j]:j for j in range(len(state.S[i]))}
@@ -184,7 +238,10 @@ def applyGate(state, U, F):
         mappedF = applyForwardMap(F)
 
         expandedU = expandUnitary(U, len(state.S[i]), mappedF)
-        evolvedProjections.append(applyGateToProjection(expandedU, state.projections[i]))
+        evolvedExpandedU = applyGateToProjection(expandedU, state.projections[i])
+        evolvedExpandedU.real[abs(evolvedExpandedU.real) < tol] = 0.0
+        evolvedExpandedU.imag[abs(evolvedExpandedU.imag) < tol] = 0.0
+        evolvedProjections.append(evolvedExpandedU)
     return AbstractState(state.n, state.S, evolvedProjections)
 
 def alphaFunction(state, S):
@@ -273,8 +330,8 @@ def getSupport(A):
 
 def getMatrixFromSpan(span):
     dim = span[0].shape[0]
-    # P_span = np.matrix(np.zeros((dim, dim)), dtype=complex)
-    P_span = np.matrix(np.zeros((dim, dim)), dtype=complex)
+    # P_span = np.array(np.zeros((dim, dim)), dtype=complex)
+    P_span = np.zeros((dim, dim), dtype=complex)
 
     # Gram Schmidt
     # TODO: Might be not necessary
@@ -283,7 +340,7 @@ def getMatrixFromSpan(span):
     for i in range(len(orthonorm_span)):
         P_span[:, i] = orthonorm_span[i]
 
-    return P_span * P_span.conj().T
+    return P_span @ P_span.conj().T
 
 def intersectSupports(suppA, suppB):
     dim = suppA[0].shape[0]
@@ -307,21 +364,22 @@ def intersectSupports(suppA, suppB):
     return P_intersect
 
 if __name__ == '__main__':
-    initial_proj = np.matrix([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
+    initial_proj = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
     initial_state = AbstractState(3, [[0, 1], [0, 2], [1, 2]], [initial_proj, initial_proj, initial_proj])
 
-    H = 1/np.sqrt(2) * np.matrix([[1, 1],[1, -1]], dtype=complex)
-    X = np.matrix([[0, 1],[1, 0]], dtype=complex)
+    H = 1/np.sqrt(2) * np.array([[1, 1],[1, -1]], dtype=complex)
+    X = np.array([[0, 1],[1, 0]], dtype=complex)
 
     print(initial_state)
 
     state1 = abstractStep(initial_state, H, [0])
     print(state1)
 
-    # import pdb
-    # pdb.set_trace()
+    import pdb
+    pdb.set_trace()
+
     state2 = abstractStep(state1, H, [1])
     print(state2)
 
     state3 = abstractStep(state2, X, [2])
-    print(state2)
+    print(state3)
