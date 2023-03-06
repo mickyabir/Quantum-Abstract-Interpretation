@@ -1,6 +1,7 @@
 import numpy as np
 
-tol = 1e-14
+gs_tol = 1e-8
+zero_tol = 1e-6
 
 class AbstractState():
     def __init__(self, n, S, projections):
@@ -199,12 +200,12 @@ def intersectProjections(projections, tj):
     complementSupport = getSupport(fullComplementUnion)
     complementSupportMatrix = getMatrixFromSpan(complementSupport)
 
-    complementSupportMatrix.real[abs(complementSupportMatrix.real) < tol] = 0.0
-    complementSupportMatrix.imag[abs(complementSupportMatrix.imag) < tol] = 0.0
+    # complementSupportMatrix.real[abs(complementSupportMatrix.real) < tol] = 0.0
+    # complementSupportMatrix.imag[abs(complementSupportMatrix.imag) < tol] = 0.0
 
     finalSupportMatrix = np.identity(2 ** len(tj)) - complementSupportMatrix
-    finalSupportMatrix.real[abs(finalSupportMatrix.real) < tol] = 0.0
-    finalSupportMatrix.imag[abs(finalSupportMatrix.imag) < tol] = 0.0
+    # finalSupportMatrix.real[abs(finalSupportMatrix.real) < tol] = 0.0
+    # finalSupportMatrix.imag[abs(finalSupportMatrix.imag) < tol] = 0.0
 
     return finalSupportMatrix
 
@@ -239,8 +240,8 @@ def applyGate(state, U, F):
 
         expandedU = expandUnitary(U, len(state.S[i]), mappedF)
         evolvedExpandedU = applyGateToProjection(expandedU, state.projections[i])
-        evolvedExpandedU.real[abs(evolvedExpandedU.real) < tol] = 0.0
-        evolvedExpandedU.imag[abs(evolvedExpandedU.imag) < tol] = 0.0
+        # evolvedExpandedU.real[abs(evolvedExpandedU.real) < tol] = 0.0
+        # evolvedExpandedU.imag[abs(evolvedExpandedU.imag) < tol] = 0.0
         evolvedProjections.append(evolvedExpandedU)
     return AbstractState(state.n, state.S, evolvedProjections)
 
@@ -292,9 +293,9 @@ def normalized(a, axis=-1, order=2):
     l2[l2==0] = 1
     return a / np.expand_dims(l2, axis)
 
-def vecotrProjection(u, v):
+def vectorProjection(u, v):
     v_norm = np.sqrt(np.dot(v.T, v).item())
-    proj = (np.dot(u.T, v).item()/v_norm**2)*v
+    proj = (np.dot(u.T, v).item() / v_norm ** 2) * v
     return proj
 
 def gramSchmidt(vectors):
@@ -303,10 +304,10 @@ def gramSchmidt(vectors):
         u_i = vectors[i]
 
         for j in range(0, i):
-            proj = vecotrProjection(vectors[i], vectors[j])
+            proj = vectorProjection(vectors[i], u_vectors[j])
             u_i = u_i - proj
-            u_i.real[abs(u_i.real) < tol] = 0.0
-            u_i.imag[abs(u_i.imag) < tol] = 0.0
+            u_i.real[abs(u_i.real) < zero_tol] = 0.0
+            u_i.imag[abs(u_i.imag) < zero_tol] = 0.0
 
         if u_i.any():
             u_vectors.append(u_i)
@@ -322,19 +323,16 @@ def getSupport(A):
     for i in range(len(w)):
         if w[i] > 0:
             vector = v[:, i]
-            vector.real[abs(vector.real) < tol] = 0.0
-            vector.imag[abs(vector.imag) < tol] = 0.0
+            # vector.real[abs(vector.real) < tol] = 0.0
+            # vector.imag[abs(vector.imag) < tol] = 0.0
             vectors.append(vector)
 
     return vectors
 
 def getMatrixFromSpan(span):
     dim = span[0].shape[0]
-    # P_span = np.array(np.zeros((dim, dim)), dtype=complex)
     P_span = np.zeros((dim, dim), dtype=complex)
 
-    # Gram Schmidt
-    # TODO: Might be not necessary
     orthonorm_span = gramSchmidt(span)
 
     for i in range(len(orthonorm_span)):
@@ -358,12 +356,15 @@ def intersectSupports(suppA, suppB):
 
     P_intersect = I - P_comp_union
 
-    P_intersect.real[abs(P_intersect.real) < tol] = 0.0
-    P_intersect.imag[abs(P_intersect.imag) < tol] = 0.0
+    # P_intersect.real[abs(P_intersect.real) < tol] = 0.0
+    # P_intersect.imag[abs(P_intersect.imag) < tol] = 0.0
 
     return P_intersect
 
 if __name__ == '__main__':
+    import sys
+    np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
+
     initial_proj = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
     initial_state = AbstractState(3, [[0, 1], [0, 2], [1, 2]], [initial_proj, initial_proj, initial_proj])
 
@@ -381,5 +382,11 @@ if __name__ == '__main__':
     state2 = abstractStep(state1, H, [1])
     print(state2)
 
-    state3 = abstractStep(state2, X, [2])
+    state3 = abstractStep(state2, H, [1])
     print(state3)
+
+    state4 = abstractStep(state3, H, [0])
+    print(state4)
+
+    #state3 = abstractStep(state2, X, [2])
+    #print(state3)

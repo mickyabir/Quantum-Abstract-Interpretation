@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from QAI import tol, generateQubitSwapUnitary, generateQubitSwapFrontUnitary, generateQubitRightRotateUnitary, generateQubitLeftRotateUnitary, expandUnitary
+from QAI import zero_tol as tol, generateQubitSwapUnitary, generateQubitSwapFrontUnitary, generateQubitRightRotateUnitary, generateQubitLeftRotateUnitary, expandUnitary, gramSchmidt
 
 class GenerateQubitSwapUnitaryTest(unittest.TestCase):
     def test_generate_qubit_swap_unitary_default(self):
@@ -189,3 +189,22 @@ class ExpandUnitaryTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(expandedUV, actualMatrix))
 
+class GramSchmidtTest(unittest.TestCase):
+    def test_gram_schmidt_empty(self):
+        v1 = np.array([1, -1, 1], dtype=complex)
+        v2 = np.array([1, 0, 1], dtype=complex)
+        v3 = np.array([1, 1, 2], dtype=complex)
+
+        vectors = [v1, v2, v3]
+
+        import pdb
+        pdb.set_trace()
+        actualVectors = gramSchmidt(vectors)
+
+        expectedV1 = np.array([np.sqrt(3) / 3, -np.sqrt(3) / 3, np.sqrt(3) / 3], dtype=complex)
+        expectedV2 = np.array([np.sqrt(6) / 6, np.sqrt(6) / 3, np.sqrt(6) / 6], dtype=complex)
+        expectedV3 = np.array([-np.sqrt(2) / 2, 0, np.sqrt(2) / 2], dtype=complex)
+        expectedVectors = [expectedV1, expectedV2, expectedV3]
+
+        for i in range(len(expectedVectors)):
+            self.assertTrue(np.allclose(actualVectors[i], expectedVectors[i]))
