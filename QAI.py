@@ -191,16 +191,22 @@ def partialTrace(M, n, F):
     for i in F:
         firstSwap = generateQubitSwapUnitary(currentSystemSize, 0, i)
 
-        currentMatrix = firstSwap @ currentMatrix
+        currentMatrix = firstSwap @ currentMatrix @ firstSwap.T
 
         A = currentMatrix[0:int(M.shape[0]/2), 0:int(M.shape[1]/2)]
         D = currentMatrix[int(M.shape[0]/2):int(M.shape[0]), int(M.shape[1]/2):int(M.shape[1])]
 
         currentMatrix = A + D
 
+
+        # a b c d e
+        # d b c a e 
+        # b c a e :  bca -> abc e 
+        
+
         currentSystemSize -= 1
         rotateUndo = generateQubitRightRotateUnitary(currentSystemSize, i - 1)
-        currentMatrix = rotateUndo @ currentMatrix
+        currentMatrix = rotateUndo @ currentMatrix @ rotateUndo.T
 
     return currentMatrix
 
@@ -391,8 +397,8 @@ if __name__ == '__main__':
     X = np.array([[0, 1],[1, 0]], dtype=complex)
     CNOT = np.array([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
 
-    # import pdb
-    # pdb.set_trace()
+    import pdb
+    pdb.set_trace()
 
     print(initial_state)
 
@@ -414,10 +420,10 @@ if __name__ == '__main__':
     state4 = abstractStep(state3, CNOT, [1, 2])
     print(state4)
 
-    import pdb
-    pdb.set_trace()
+    # import pdb
+    # pdb.set_trace()
 
-    state5 = abstractStep(state4, CNOT, [0, 1])
+    state5 = abstractStep(state4, CNOT, [0, 2])
     print(state5)
 
     state6 = abstractStep(state5, H, [0])
