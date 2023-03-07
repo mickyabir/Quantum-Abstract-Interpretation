@@ -299,15 +299,18 @@ def vectorProjection(u, v):
     return proj
 
 def gramSchmidt(vectors):
+    vectors = [v for v in vectors if not np.allclose(v, np.zeros(v.shape[0],))]
+
     u_vectors = []
     for i in range(len(vectors)):
         u_i = vectors[i]
 
-        for j in range(0, i):
+        for j in range(0, len(u_vectors)):
             proj = vectorProjection(vectors[i], u_vectors[j])
             u_i = u_i - proj
-            u_i.real[abs(u_i.real) < zero_tol] = 0.0
-            u_i.imag[abs(u_i.imag) < zero_tol] = 0.0
+
+        u_i.real[abs(u_i.real) < zero_tol] = 0.0
+        u_i.imag[abs(u_i.imag) < zero_tol] = 0.0
 
         if u_i.any():
             u_vectors.append(u_i)
@@ -317,17 +320,24 @@ def gramSchmidt(vectors):
     return e_vectors
 
 def getSupport(A):
+    columnVectors = [A[:, i] for i in range(A.shape[0])]
+    gsColumnVectors = gramSchmidt(columnVectors)
+    return gsColumnVectors
+
     w, v = np.linalg.eig(A)
 
     vectors = []
     for i in range(len(w)):
         if w[i] > 0:
             vector = v[:, i]
-            # vector.real[abs(vector.real) < tol] = 0.0
-            # vector.imag[abs(vector.imag) < tol] = 0.0
             vectors.append(vector)
 
-    return vectors
+    for i in range(len(vectors)):
+        if not np.allclose(vectors[i], gsColumnVectors[i]):
+            import pdb
+            pdb.set_trace()
+            gsColumnVectors = gramSchmidt(columnVectors)
+    return gramSchmidt(vectors)
 
 def getMatrixFromSpan(span):
     dim = span[0].shape[0]
@@ -339,27 +349,6 @@ def getMatrixFromSpan(span):
         P_span[:, i] = orthonorm_span[i]
 
     return P_span @ P_span.conj().T
-
-def intersectSupports(suppA, suppB):
-    dim = suppA[0].shape[0]
-    I = np.identity(dim)
-
-    P_A = getMatrixFromSpan(suppA)
-    P_B = getMatrixFromSpan(suppB)
-
-    P_A_comp = I - P_A
-    P_B_comp = I - P_B
-
-    supp_comp_union = getSupport(P_A_comp + P_B_comp)
-
-    P_comp_union = getMatrixFromSpan(supp_comp_union)
-
-    P_intersect = I - P_comp_union
-
-    # P_intersect.real[abs(P_intersect.real) < tol] = 0.0
-    # P_intersect.imag[abs(P_intersect.imag) < tol] = 0.0
-
-    return P_intersect
 
 if __name__ == '__main__':
     import sys
