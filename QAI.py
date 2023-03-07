@@ -3,6 +3,40 @@ import numpy as np
 gs_tol = 1e-8
 zero_tol = 1e-6
 
+def pprint_repr(A):
+    retStr = ''
+    p_tol = 1e-5
+    round_tol = 4
+    for i in range(len(A)):
+        for j in range(len(A[i])):
+            realFlag = False
+            complexFlag = False
+            if abs(A[i][j].real) > p_tol:
+                retStr += f'{np.around(A[i][j].real, decimals = round_tol)}'
+                realFlag = True
+            if abs(A[i][j].imag) > p_tol:
+                imagStr = ''
+                if realFlag:
+                    imagStr += ' + '
+
+                imagStr += f'{np.around(A[i][j].imag, decimals = round_tol)}j'
+
+                retStr += imagStr
+
+                complexFlag = True
+
+            if not realFlag and not complexFlag:
+                retStr += f'0'
+
+            retStr += '   '
+
+        retStr += '\n\n'
+
+    return retStr
+
+def pprint(A):
+    print(pprint_repr(A))
+
 class AbstractState():
     def __init__(self, n, S, projections):
         self.n = n
@@ -13,7 +47,7 @@ class AbstractState():
         retStr = ""
         retStr += f"Abstract State:\n\nn: {self.n}\n"
         for i in range(len(self.projections)):
-            retStr += f"\n{self.S[i]}\n<->\n{self.projections[i]}\n\n"
+            retStr += f"\n{self.S[i]}\n<->\n{pprint_repr(self.projections[i])}\n\n"
         return retStr
 
 def generateQubitRightRotateUnitary(n, i):
@@ -275,16 +309,16 @@ def abstractStep(state, U, F):
     for si in state.S:
         T.append(list(set(si).union(set(F))))
 
-    print('######################################\n\n')
+    # print('######################################\n\n')
     concreteState = gammaFunction(state, T)
-    print(f'Concrete State:\n{concreteState}')
+    # print(f'Concrete State:\n{concreteState}')
 
     evolvedState = applyGate(concreteState, U, F)
-    print(f'Evolved Concrete State:\n{evolvedState}')
+    # print(f'Evolved Concrete State:\n{evolvedState}')
 
     evolvedAbstractState = alphaFunction(evolvedState, state.S)
-    print(f'Evolved Abstract State:\n{evolvedAbstractState}')
-    print('######################################\n\n')
+    # print(f'Evolved Abstract State:\n{evolvedAbstractState}')
+    # print('######################################\n\n')
     return evolvedAbstractState
 
 # from https://stackoverflow.com/questions/21030391/how-to-normalize-a-numpy-array-to-a-unit-vector
@@ -324,25 +358,21 @@ def getSupport(A):
     gsColumnVectors = gramSchmidt(columnVectors)
     return gsColumnVectors
 
-    w, v = np.linalg.eig(A)
+    # w, v = np.linalg.eig(A)
 
-    vectors = []
-    for i in range(len(w)):
-        if w[i] > 0:
-            vector = v[:, i]
-            vectors.append(vector)
+    # vectors = []
+    # for i in range(len(w)):
+    #     if w[i] > 0:
+    #         vector = v[:, i]
+    #         vectors.append(vector)
 
-    for i in range(len(vectors)):
-        if not np.allclose(vectors[i], gsColumnVectors[i]):
-            import pdb
-            pdb.set_trace()
-            gsColumnVectors = gramSchmidt(columnVectors)
-    return gramSchmidt(vectors)
+    # return gramSchmidt(vectors)
 
 def getMatrixFromSpan(span):
     dim = span[0].shape[0]
     P_span = np.zeros((dim, dim), dtype=complex)
 
+    # TODO: remove, unnecessary
     orthonorm_span = gramSchmidt(span)
 
     for i in range(len(orthonorm_span)):
@@ -359,23 +389,42 @@ if __name__ == '__main__':
 
     H = 1/np.sqrt(2) * np.array([[1, 1],[1, -1]], dtype=complex)
     X = np.array([[0, 1],[1, 0]], dtype=complex)
+    CNOT = np.array([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
+
+    # import pdb
+    # pdb.set_trace()
 
     print(initial_state)
 
     state1 = abstractStep(initial_state, H, [0])
     print(state1)
 
-    import pdb
-    pdb.set_trace()
-
     state2 = abstractStep(state1, H, [1])
     print(state2)
 
-    state3 = abstractStep(state2, H, [1])
+    # state3 = abstractStep(state2, H, [1])
+    # print(state3)
+
+    # state4 = abstractStep(state3, H, [0])
+    # print(state4)
+
+    state3 = abstractStep(state2, X, [2])
     print(state3)
 
-    state4 = abstractStep(state3, H, [0])
+    state4 = abstractStep(state3, CNOT, [1, 2])
     print(state4)
 
-    #state3 = abstractStep(state2, X, [2])
-    #print(state3)
+    import pdb
+    pdb.set_trace()
+
+    state5 = abstractStep(state4, CNOT, [0, 1])
+    print(state5)
+
+    state6 = abstractStep(state5, H, [0])
+    print(state6)
+
+    state7 = abstractStep(state6, H, [1])
+    print(state7)
+
+    state8 = abstractStep(state7, H, [2])
+    print(state8)
