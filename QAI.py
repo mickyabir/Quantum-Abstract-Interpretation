@@ -188,24 +188,21 @@ def partialTrace(M, n, F):
     currentSystemSize = n
     currentMatrix = M
 
-    for i in F:
-        firstSwap = generateQubitSwapUnitary(currentSystemSize, 0, i)
+    for i in range(len(F)):
+        firstSwap = generateQubitSwapUnitary(currentSystemSize, 0, F[i])
 
         currentMatrix = firstSwap @ currentMatrix @ firstSwap.T
 
-        A = currentMatrix[0:int(M.shape[0]/2), 0:int(M.shape[1]/2)]
-        D = currentMatrix[int(M.shape[0]/2):int(M.shape[0]), int(M.shape[1]/2):int(M.shape[1])]
+        A = currentMatrix[0:int(currentMatrix.shape[0]/2), 0:int(currentMatrix.shape[1]/2)]
+        D = currentMatrix[int(currentMatrix.shape[0]/2):int(currentMatrix.shape[0]), int(currentMatrix.shape[1]/2):int(currentMatrix.shape[1])]
 
         currentMatrix = A + D
 
-
-        # a b c d e
-        # d b c a e 
-        # b c a e :  bca -> abc e 
-        
-
         currentSystemSize -= 1
-        rotateUndo = generateQubitRightRotateUnitary(currentSystemSize, i - 1)
+
+        F = list(map(lambda x : x - 1, F))
+
+        rotateUndo = generateQubitRightRotateUnitary(currentSystemSize, F[i])
         currentMatrix = rotateUndo @ currentMatrix @ rotateUndo.T
 
     return currentMatrix
@@ -240,12 +237,7 @@ def intersectProjections(projections, tj):
     complementSupport = getSupport(fullComplementUnion)
     complementSupportMatrix = getMatrixFromSpan(complementSupport)
 
-    # complementSupportMatrix.real[abs(complementSupportMatrix.real) < tol] = 0.0
-    # complementSupportMatrix.imag[abs(complementSupportMatrix.imag) < tol] = 0.0
-
     finalSupportMatrix = np.identity(2 ** len(tj)) - complementSupportMatrix
-    # finalSupportMatrix.real[abs(finalSupportMatrix.real) < tol] = 0.0
-    # finalSupportMatrix.imag[abs(finalSupportMatrix.imag) < tol] = 0.0
 
     return finalSupportMatrix
 
@@ -280,8 +272,6 @@ def applyGate(state, U, F):
 
         expandedU = expandUnitary(U, len(state.S[i]), mappedF)
         evolvedExpandedU = applyGateToProjection(expandedU, state.projections[i])
-        # evolvedExpandedU.real[abs(evolvedExpandedU.real) < tol] = 0.0
-        # evolvedExpandedU.imag[abs(evolvedExpandedU.imag) < tol] = 0.0
         evolvedProjections.append(evolvedExpandedU)
     return AbstractState(state.n, state.S, evolvedProjections)
 
@@ -313,18 +303,12 @@ def alphaFunction(state, S):
 def abstractStep(state, U, F):
     T = []
     for si in state.S:
-        T.append(list(set(si).union(set(F))))
+        T.append(sorted(list(set(si).union(set(F)))))
 
-    # print('######################################\n\n')
     concreteState = gammaFunction(state, T)
-    # print(f'Concrete State:\n{concreteState}')
-
     evolvedState = applyGate(concreteState, U, F)
-    # print(f'Evolved Concrete State:\n{evolvedState}')
-
     evolvedAbstractState = alphaFunction(evolvedState, state.S)
-    # print(f'Evolved Abstract State:\n{evolvedAbstractState}')
-    # print('######################################\n\n')
+
     return evolvedAbstractState
 
 # from https://stackoverflow.com/questions/21030391/how-to-normalize-a-numpy-array-to-a-unit-vector
@@ -364,31 +348,48 @@ def getSupport(A):
     gsColumnVectors = gramSchmidt(columnVectors)
     return gsColumnVectors
 
-    # w, v = np.linalg.eig(A)
-
-    # vectors = []
-    # for i in range(len(w)):
-    #     if w[i] > 0:
-    #         vector = v[:, i]
-    #         vectors.append(vector)
-
-    # return gramSchmidt(vectors)
-
 def getMatrixFromSpan(span):
     dim = span[0].shape[0]
     P_span = np.zeros((dim, dim), dtype=complex)
 
     # TODO: remove, unnecessary
-    orthonorm_span = gramSchmidt(span)
+    # orthonorm_span = gramSchmidt(span)
+    orthonorm_span = span
 
     for i in range(len(orthonorm_span)):
         P_span[:, i] = orthonorm_span[i]
 
     return P_span @ P_span.conj().T
 
+def generateGHZ(n):
+    S = []
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            S.append([i, j])
+
+    initial_proj = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
+    initial_state = AbstractState(n, S, [initial_proj for _ in range(int(n * (n - 1) / 2))])
+
+    H = 1/np.sqrt(2) * np.array([[1, 1],[1, -1]], dtype=complex)
+    X = np.array([[0, 1],[1, 0]], dtype=complex)
+    CNOT = np.array([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
+
+    nextState = abstractStep(initial_state, H, [0])
+
+
+    for i in range(1, n):
+        nextState = abstractStep(nextState, CNOT, [0, i])
+
+    import pdb
+    pdb.set_trace()
+
+
 if __name__ == '__main__':
     import sys
     np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
+
+    generateGHZ(20)
 
     initial_proj = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
     initial_state = AbstractState(3, [[0, 1], [0, 2], [1, 2]], [initial_proj, initial_proj, initial_proj])
@@ -408,20 +409,11 @@ if __name__ == '__main__':
     state2 = abstractStep(state1, H, [1])
     print(state2)
 
-    # state3 = abstractStep(state2, H, [1])
-    # print(state3)
-
-    # state4 = abstractStep(state3, H, [0])
-    # print(state4)
-
     state3 = abstractStep(state2, X, [2])
     print(state3)
 
     state4 = abstractStep(state3, CNOT, [1, 2])
     print(state4)
-
-    # import pdb
-    # pdb.set_trace()
 
     state5 = abstractStep(state4, CNOT, [0, 2])
     print(state5)

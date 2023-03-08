@@ -190,15 +190,12 @@ class ExpandUnitaryTest(unittest.TestCase):
         self.assertTrue(np.allclose(expandedUV, actualMatrix))
 
 class GramSchmidtTest(unittest.TestCase):
-    def test_gram_schmidt_empty(self):
+    def test_gram_schmidt_full_one(self):
         v1 = np.array([1, -1, 1], dtype=complex)
         v2 = np.array([1, 0, 1], dtype=complex)
         v3 = np.array([1, 1, 2], dtype=complex)
 
         vectors = [v1, v2, v3]
-
-        import pdb
-        pdb.set_trace()
         actualVectors = gramSchmidt(vectors)
 
         expectedV1 = np.array([np.sqrt(3) / 3, -np.sqrt(3) / 3, np.sqrt(3) / 3], dtype=complex)
@@ -208,3 +205,36 @@ class GramSchmidtTest(unittest.TestCase):
 
         for i in range(len(expectedVectors)):
             self.assertTrue(np.allclose(actualVectors[i], expectedVectors[i]))
+
+    def test_gram_schmidt_full_two(self):
+        v1 = np.array([1, 2, 2], dtype=complex)
+        v2 = np.array([-1, 0, 2], dtype=complex)
+        v3 = np.array([0, 0, 1], dtype=complex)
+
+        vectors = [v1, v2, v3]
+        actualVectors = gramSchmidt(vectors)
+
+        expectedV1 = 1/3 * np.array([1, 2, 2], dtype=complex)
+        expectedV2 = 1/3 * np.array([-2, -1, 2], dtype=complex)
+        expectedV3 = 1/3 * np.array([2, -2, 1], dtype=complex)
+        expectedVectors = [expectedV1, expectedV2, expectedV3]
+
+        for i in range(len(expectedVectors)):
+            self.assertTrue(np.allclose(actualVectors[i], expectedVectors[i]))
+
+    def test_gram_schmidt_zero_vector(self):
+        v1 = np.array([1, 0, 0], dtype=complex)
+        v2 = np.array([0, 1, 0], dtype=complex)
+        v3 = np.array([0, 0, 0], dtype=complex)
+
+        vectors = [v1, v2, v3]
+
+        actualVectors = gramSchmidt(vectors)
+
+        expectedV1 = np.array([1, 0, 0], dtype=complex)
+        expectedV2 = np.array([0, 1, 0], dtype=complex)
+        expectedV3 = np.array([0, 0, 0], dtype=complex)
+
+        self.assertTrue(len(actualVectors) == 2)
+        self.assertTrue(np.allclose(actualVectors[0], expectedV1))
+        self.assertTrue(np.allclose(actualVectors[1], expectedV2))
