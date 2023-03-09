@@ -130,9 +130,9 @@ def partialTrace(M, n, F):
     currentMatrix = M
 
     for i in range(len(F)):
-        firstSwap = generateQubitSwapUnitary(currentSystemSize, 0, F[i])
-
-        currentMatrix = firstSwap @ currentMatrix @ firstSwap.T
+        if F[i] > 0:
+            firstSwap = generateQubitSwapUnitary(currentSystemSize, 0, F[i])
+            currentMatrix = firstSwap @ currentMatrix @ firstSwap.T
 
         A = currentMatrix[0:int(currentMatrix.shape[0]/2), 0:int(currentMatrix.shape[1]/2)]
         D = currentMatrix[int(currentMatrix.shape[0]/2):int(currentMatrix.shape[0]), int(currentMatrix.shape[1]/2):int(currentMatrix.shape[1])]
@@ -143,8 +143,9 @@ def partialTrace(M, n, F):
 
         F = list(map(lambda x : x - 1, F))
 
-        rotateUndo = generateQubitRightRotateUnitary(currentSystemSize, F[i])
-        currentMatrix = rotateUndo @ currentMatrix @ rotateUndo.T
+        if F[i] > 0:
+            rotateUndo = generateQubitRightRotateUnitary(currentSystemSize, F[i])
+            currentMatrix = rotateUndo @ currentMatrix @ rotateUndo.T
 
     return currentMatrix
 
@@ -293,12 +294,8 @@ def getMatrixFromSpan(span):
     dim = span[0].shape[0]
     P_span = np.zeros((dim, dim), dtype=complex)
 
-    # TODO: remove, unnecessary
-    # orthonorm_span = gramSchmidt(span)
-    orthonorm_span = span
-
-    for i in range(len(orthonorm_span)):
-        P_span[:, i] = orthonorm_span[i]
+    for i in range(len(span)):
+        P_span[:, i] = span[i]
 
     return P_span @ P_span.conj().T
 
@@ -352,9 +349,6 @@ def generateGHZPaperPartial(n):
         nextState = abstractStep(nextState, H, [i])
 
     nextState = abstractStep(nextState, X, [n - 1])
-
-    import pdb
-    pdb.set_trace()
 
     for i in range(0, n - 1):
         nextState = abstractStep(nextState, CNOT, [i, n - 1])
@@ -420,7 +414,9 @@ if __name__ == '__main__':
     import sys
     np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
 
-    generateGHZPaperFull(50)
+    exampleFromPaper()
+
+    # generateGHZPaperFull(50)
 
     # import cProfile, pstats, io
     # from pstats import SortKey
