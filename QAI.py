@@ -90,7 +90,6 @@ def generateQubitLeftRotateUnitary(n, i):
 
     return rotateUnitary
 
-
 def generateQubitSwapUnitary(n, i, j):
     if n == 1:
         return np.identity(2)
@@ -166,6 +165,9 @@ def intersectProjections(projections, tj):
 
     fullComplementUnion = len(projections) * np.identity(2 ** len(tj)) - expandedUnion
     complementSupport = getSupport(fullComplementUnion)
+
+    if not complementSupport:
+        return np.identity(2 ** len(tj), dtype=complex)
     complementSupportMatrix = getMatrixFromSpan(complementSupport)
 
     finalSupportMatrix = np.identity(2 ** len(tj)) - complementSupportMatrix
@@ -254,9 +256,6 @@ def vectorProjection(u, v):
     return proj
 
 def gramSchmidt(vectors):
-    # Optimize
-    # vectors = [v for v in vectors if not np.allclose(v, np.zeros(v.shape[0],))]
-
     u_vectors = []
     for i in range(len(vectors)):
         u_i = vectors[i]
@@ -400,27 +399,30 @@ if __name__ == '__main__':
     import sys
     np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
 
+    generateGHZPaperPartial(3)
+    0/0
+
     # exampleFromPaper()
 
-    import time
+    # import time
 
-    qubitList = [3, 5, 10, 15, 20, 30, 40, 50]
+    # qubitList = [3, 5, 10, 15, 20, 30, 40, 50]
 
-    for n in qubitList:
-        prev = time.time()
-        generateGHZPaperFull(n)
-        elapsed = time.time() - prev
-        print(f'{n}: {elapsed}')
+    # for n in qubitList:
+    #     prev = time.time()
+    #     generateGHZPaperFull(n)
+    #     elapsed = time.time() - prev
+    #     print(f'{n}: {elapsed}')
 
-    # import cProfile, pstats, io
-    # from pstats import SortKey
+    import cProfile, pstats, io
+    from pstats import SortKey
 
-    # with cProfile.Profile() as pr:
-    #     generateGHZPaperFull(20)
+    with cProfile.Profile() as pr:
+        generateGHZPaperFull(20)
 
-    #     s = io.StringIO()
-    #     sortby = SortKey.CUMULATIVE
-    #     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    #     ps.print_stats()
-    #     print(s.getvalue())
+        s = io.StringIO()
+        sortby = SortKey.CUMULATIVE
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
 
