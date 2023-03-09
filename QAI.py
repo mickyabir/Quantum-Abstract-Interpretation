@@ -265,7 +265,8 @@ def vectorProjection(u, v):
     return proj
 
 def gramSchmidt(vectors):
-    vectors = [v for v in vectors if not np.allclose(v, np.zeros(v.shape[0],))]
+    # Optimize
+    # vectors = [v for v in vectors if not np.allclose(v, np.zeros(v.shape[0],))]
 
     u_vectors = []
     for i in range(len(vectors)):
@@ -325,6 +326,8 @@ def generateGHZPaperFull(n):
 
     for i in range(0, n):
         nextState = abstractStep(nextState, H, [i])
+
+    print(nextState)
 
 def generateGHZPaperPartial(n):
     S = []
@@ -414,9 +417,9 @@ if __name__ == '__main__':
     import sys
     np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
 
-    exampleFromPaper()
+    # exampleFromPaper()
 
-    # generateGHZPaperFull(50)
+    generateGHZPaperFull(10)
 
     # import cProfile, pstats, io
     # from pstats import SortKey
