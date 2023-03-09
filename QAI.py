@@ -56,7 +56,7 @@ def generateQubitRightRotateUnitary(n, i):
 
     getBin = lambda x, n: format(x, 'b').zfill(n)
 
-    rotateUnitaryRows = []
+    rotateUnitary = np.identity(2 ** n)
     for k in range(2 ** n):
         binaryStringK = list(getBin(k, n))
 
@@ -65,12 +65,8 @@ def generateQubitRightRotateUnitary(n, i):
         leftStringK = [leftStringK[-1]] + leftStringK[0:len(leftStringK) - 1]
         intK = int(''.join(leftStringK + rightStringK), 2)
 
-        rotateUnitaryRow = np.array([0 for _ in range(2 ** n)])
-        rotateUnitaryRow[intK] = 1
-
-        rotateUnitaryRows.append(rotateUnitaryRow)
-
-    rotateUnitary = np.vstack(tuple(rotateUnitaryRows))
+        rotateUnitary[k][k] = 0
+        rotateUnitary[k][intK] = 1
 
     return rotateUnitary
 
@@ -80,7 +76,7 @@ def generateQubitLeftRotateUnitary(n, i):
 
     getBin = lambda x, n: format(x, 'b').zfill(n)
 
-    rotateUnitaryRows = []
+    rotateUnitary = np.identity(2 ** n)
     for k in range(2 ** n):
         binaryStringK = list(getBin(k, n))
 
@@ -89,12 +85,8 @@ def generateQubitLeftRotateUnitary(n, i):
         leftStringK = leftStringK[1:len(leftStringK)] + [leftStringK[0]]
         intK = int(''.join(leftStringK + rightStringK), 2)
 
-        rotateUnitaryRow = np.array([0 for _ in range(2 ** n)])
-        rotateUnitaryRow[intK] = 1
-
-        rotateUnitaryRows.append(rotateUnitaryRow)
-
-    rotateUnitary = np.vstack(tuple(rotateUnitaryRows))
+        rotateUnitary[k][k] = 0
+        rotateUnitary[k][intK] = 1
 
     return rotateUnitary
 
@@ -105,7 +97,8 @@ def generateQubitSwapUnitary(n, i, j):
 
     getBin = lambda x, n: format(x, 'b').zfill(n)
 
-    swapUnitaryRows = []
+    swapUnitary = np.identity(2 ** n)
+
     for k in range(2 ** n):
         binaryStringK = list(getBin(k, n))
         tmp = binaryStringK[i]
@@ -114,12 +107,8 @@ def generateQubitSwapUnitary(n, i, j):
         binaryStringK = ''.join(binaryStringK)
         intK = int(binaryStringK, 2)
 
-        swapUnitaryRow = np.array([0 for _ in range(2 ** n)])
-        swapUnitaryRow[intK] = 1
-
-        swapUnitaryRows.append(swapUnitaryRow)
-
-    swapUnitary = np.vstack(tuple(swapUnitaryRows))
+        swapUnitary[k][k] = 0
+        swapUnitary[k][intK] = 1
 
     return swapUnitary
 
@@ -327,20 +316,14 @@ def generateGHZPaperFull(n):
     for i in range(0, n):
         nextState = abstractStep(nextState, H, [i])
 
-    print(nextState)
-
 def generateGHZPaperPartial(n):
     S = []
 
     for i in range(n - 1):
         S.append([i, i + 1])
 
-    print(S)
-
     initial_proj = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
     initial_state = AbstractState(n, S, [initial_proj for _ in range(n - 1)])
-
-    print(initial_state.projections)
 
     H = 1/np.sqrt(2) * np.array([[1, 1],[1, -1]], dtype=complex)
     X = np.array([[0, 1],[1, 0]], dtype=complex)
@@ -419,7 +402,15 @@ if __name__ == '__main__':
 
     # exampleFromPaper()
 
-    generateGHZPaperFull(10)
+    import time
+
+    qubitList = [3, 5, 10, 15, 20, 30, 40, 50]
+
+    for n in qubitList:
+        prev = time.time()
+        generateGHZPaperFull(n)
+        elapsed = time.time() - prev
+        print(f'{n}: {elapsed}')
 
     # import cProfile, pstats, io
     # from pstats import SortKey
