@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from QAI import zero_tol as tol, generateQubitSwapUnitary, generateQubitSwapFrontUnitary, generateQubitRightRotateUnitary, generateQubitLeftRotateUnitary, expandUnitary, gramSchmidt
+from QAI import zero_tol as tol, generateQubitSwapUnitary, generateQubitRightRotateUnitary, generateQubitLeftRotateUnitary, expandUnitary, gramSchmidt
 
 class GenerateQubitSwapUnitaryTest(unittest.TestCase):
     def test_generate_qubit_swap_unitary_default(self):
@@ -37,17 +37,6 @@ class GenerateQubitSwapUnitaryTest(unittest.TestCase):
         expectedMatrix = np.kron(np.kron(np.kron(np.kron(E, B), C), D), A)
 
         self.assertTrue(np.allclose(actualMatrix, expectedMatrix, atol=tol))
-
-class GenerateQubitSwapFrontUnitaryTest(unittest.TestCase):
-    def test_generate_qubit_front_swap_unitary_default(self):
-        generatedSwapFrontUnitary = generateQubitSwapFrontUnitary(3, [1, 2])
-        concreteUnitary = np.array([
-            [1, 0, 0, 0],
-            [0, 0, 1, 0],
-            [0, 1, 0, 0],
-            [0, 0, 0, 1]], dtype=complex)
-
-        # self.assertTrue(np.array_equal(generatedSwapUnitary, concreteUnitary))
 
 class GenerateQubitRotateUnitary(unittest.TestCase):
     def test_generate_qubit_rotate_unitary_full_vector(self):

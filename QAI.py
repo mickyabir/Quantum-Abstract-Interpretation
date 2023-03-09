@@ -56,29 +56,21 @@ def generateQubitRightRotateUnitary(n, i):
 
     getBin = lambda x, n: format(x, 'b').zfill(n)
 
-    ketMap = {'0': np.array([1, 0]), '1': np.array([0, 1])}
-
-    rotateUnitary = None
+    rotateUnitaryRows = []
     for k in range(2 ** n):
-        binaryStringK = getBin(k, n)
-        rotateUnitaryRow = None
-        for l in range(len(binaryStringK)):
-            elem = None
+        binaryStringK = list(getBin(k, n))
 
-            if l > i:
-                elem = binaryStringK[l]
-            else: 
-                elem = binaryStringK[(l + i) % (i + 1)]
+        leftStringK = binaryStringK[0:i + 1]
+        rightStringK = binaryStringK[i + 1:len(binaryStringK)]
+        leftStringK = [leftStringK[-1]] + leftStringK[0:len(leftStringK) - 1]
+        intK = int(''.join(leftStringK + rightStringK), 2)
 
-            if rotateUnitaryRow is None:
-                rotateUnitaryRow = ketMap[elem]
-            else:
-                rotateUnitaryRow = np.kron(rotateUnitaryRow, ketMap[elem])
+        rotateUnitaryRow = np.array([0 for _ in range(2 ** n)])
+        rotateUnitaryRow[intK] = 1
 
-        if rotateUnitary is None:
-            rotateUnitary = rotateUnitaryRow
-        else:
-            rotateUnitary = np.vstack((rotateUnitary, rotateUnitaryRow))
+        rotateUnitaryRows.append(rotateUnitaryRow)
+
+    rotateUnitary = np.vstack(tuple(rotateUnitaryRows))
 
     return rotateUnitary
 
@@ -88,29 +80,21 @@ def generateQubitLeftRotateUnitary(n, i):
 
     getBin = lambda x, n: format(x, 'b').zfill(n)
 
-    ketMap = {'0': np.array([1, 0]), '1': np.array([0, 1])}
-
-    rotateUnitary = None
+    rotateUnitaryRows = []
     for k in range(2 ** n):
-        binaryStringK = getBin(k, n)
-        rotateUnitaryRow = None
-        for l in range(len(binaryStringK)):
-            elem = None
+        binaryStringK = list(getBin(k, n))
 
-            if l > i:
-                elem = binaryStringK[l]
-            else: 
-                elem = binaryStringK[(l - i) % (i + 1)]
+        leftStringK = binaryStringK[0:i + 1]
+        rightStringK = binaryStringK[i + 1:len(binaryStringK)]
+        leftStringK = leftStringK[1:len(leftStringK)] + [leftStringK[0]]
+        intK = int(''.join(leftStringK + rightStringK), 2)
 
-            if rotateUnitaryRow is None:
-                rotateUnitaryRow = ketMap[elem]
-            else:
-                rotateUnitaryRow = np.kron(rotateUnitaryRow, ketMap[elem])
+        rotateUnitaryRow = np.array([0 for _ in range(2 ** n)])
+        rotateUnitaryRow[intK] = 1
 
-        if rotateUnitary is None:
-            rotateUnitary = rotateUnitaryRow
-        else:
-            rotateUnitary = np.vstack((rotateUnitary, rotateUnitaryRow))
+        rotateUnitaryRows.append(rotateUnitaryRow)
+
+    rotateUnitary = np.vstack(tuple(rotateUnitaryRows))
 
     return rotateUnitary
 
@@ -121,67 +105,24 @@ def generateQubitSwapUnitary(n, i, j):
 
     getBin = lambda x, n: format(x, 'b').zfill(n)
 
-    ketMap = {'0': np.array([1, 0]), '1': np.array([0, 1])}
-
-    swapUnitary = None
+    swapUnitaryRows = []
     for k in range(2 ** n):
-        binaryStringK = getBin(k, n)
-        swapUnitaryRow = None
-        for l in range(len(binaryStringK)):
-            elem = None
+        binaryStringK = list(getBin(k, n))
+        tmp = binaryStringK[i]
+        binaryStringK[i] = binaryStringK[j]
+        binaryStringK[j] = tmp
+        binaryStringK = ''.join(binaryStringK)
+        intK = int(binaryStringK, 2)
 
-            if l == i:
-                elem = binaryStringK[j]
-            elif l == j:
-                elem = binaryStringK[i]
-            else:
-                elem = binaryStringK[l]
+        swapUnitaryRow = np.array([0 for _ in range(2 ** n)])
+        swapUnitaryRow[intK] = 1
 
-            if swapUnitaryRow is None:
-                swapUnitaryRow = ketMap[elem]
-            else:
-                swapUnitaryRow = np.kron(swapUnitaryRow, ketMap[elem])
+        swapUnitaryRows.append(swapUnitaryRow)
 
-        if swapUnitary is None:
-            swapUnitary = swapUnitaryRow
-        else:
-            swapUnitary = np.vstack((swapUnitary, swapUnitaryRow))
+    swapUnitary = np.vstack(tuple(swapUnitaryRows))
 
     return swapUnitary
 
-def generateQubitSwapFrontUnitary(n, F):
-    if n == 1:
-        return np.identity(2)
-
-    getBin = lambda x, n: format(x, 'b').zfill(n)
-
-    ketMap = {'0': np.array([1, 0]), '1': np.array([0, 1])}
-
-    indexMap = {F[i]:i for i in range(len(F))}
-    indexMapReverse = {i:F[i] for i in range(len(F))}
-    indexMap.update(indexMapReverse)
-
-    swapUnitary = None
-    for k in range(2 ** n):
-        binaryStringK = getBin(k, n)
-        swapUnitaryRow = None
-        for l in range(len(binaryStringK)):
-            if l in indexMap.keys():
-                elem = binaryStringK[indexMap[l]]
-            else:
-                elem = binaryStringK[l]
-
-            if swapUnitaryRow is None:
-                swapUnitaryRow = ketMap[elem]
-            else:
-                swapUnitaryRow = np.kron(swapUnitaryRow, ketMap[elem])
-
-        if swapUnitary is None:
-            swapUnitary = swapUnitaryRow
-        else:
-            swapUnitary = np.vstack((swapUnitary, swapUnitaryRow))
-
-    return swapUnitary
 
 # Trace out qubits in F from M, for n qubit system
 def partialTrace(M, n, F):
@@ -361,7 +302,67 @@ def getMatrixFromSpan(span):
 
     return P_span @ P_span.conj().T
 
-def generateGHZ(n):
+def generateGHZPaperFull(n):
+    S = []
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            S.append([i, j])
+
+    initial_proj = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
+    initial_state = AbstractState(n, S, [initial_proj for _ in range(int(n * (n - 1) / 2))])
+
+    H = 1/np.sqrt(2) * np.array([[1, 1],[1, -1]], dtype=complex)
+    X = np.array([[0, 1],[1, 0]], dtype=complex)
+    CNOT = np.array([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
+
+    nextState = initial_state
+
+    for i in range(0, n - 1):
+        nextState = abstractStep(nextState, H, [i])
+
+    nextState = abstractStep(nextState, X, [n - 1])
+
+    for i in range(0, n - 1):
+        nextState = abstractStep(nextState, CNOT, [i, n - 1])
+
+    for i in range(0, n):
+        nextState = abstractStep(nextState, H, [i])
+
+def generateGHZPaperPartial(n):
+    S = []
+
+    for i in range(n - 1):
+        S.append([i, i + 1])
+
+    print(S)
+
+    initial_proj = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
+    initial_state = AbstractState(n, S, [initial_proj for _ in range(n - 1)])
+
+    print(initial_state.projections)
+
+    H = 1/np.sqrt(2) * np.array([[1, 1],[1, -1]], dtype=complex)
+    X = np.array([[0, 1],[1, 0]], dtype=complex)
+    CNOT = np.array([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
+
+    nextState = initial_state
+
+    for i in range(0, n - 1):
+        nextState = abstractStep(nextState, H, [i])
+
+    nextState = abstractStep(nextState, X, [n - 1])
+
+    import pdb
+    pdb.set_trace()
+
+    for i in range(0, n - 1):
+        nextState = abstractStep(nextState, CNOT, [i, n - 1])
+
+    for i in range(0, n):
+        nextState = abstractStep(nextState, H, [i])
+
+def generateGHZFull(n):
     S = []
 
     for i in range(n):
@@ -381,25 +382,13 @@ def generateGHZ(n):
     for i in range(1, n):
         nextState = abstractStep(nextState, CNOT, [0, i])
 
-    import pdb
-    pdb.set_trace()
-
-
-if __name__ == '__main__':
-    import sys
-    np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
-
-    generateGHZ(20)
-
+def exampleFromPaper():
     initial_proj = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
     initial_state = AbstractState(3, [[0, 1], [0, 2], [1, 2]], [initial_proj, initial_proj, initial_proj])
 
     H = 1/np.sqrt(2) * np.array([[1, 1],[1, -1]], dtype=complex)
     X = np.array([[0, 1],[1, 0]], dtype=complex)
     CNOT = np.array([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
-
-    import pdb
-    pdb.set_trace()
 
     print(initial_state)
 
@@ -426,3 +415,22 @@ if __name__ == '__main__':
 
     state8 = abstractStep(state7, H, [2])
     print(state8)
+
+if __name__ == '__main__':
+    import sys
+    np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
+
+    generateGHZPaperFull(50)
+
+    # import cProfile, pstats, io
+    # from pstats import SortKey
+
+    # with cProfile.Profile() as pr:
+    #     generateGHZPaperFull(20)
+
+    #     s = io.StringIO()
+    #     sortby = SortKey.CUMULATIVE
+    #     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    #     ps.print_stats()
+    #     print(s.getvalue())
+
