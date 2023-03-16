@@ -2,7 +2,8 @@ import unittest
 
 import numpy as np
 
-from QAI import zero_tol as tol, generateQubitSwapUnitary, generateQubitRightRotateUnitary, generateQubitLeftRotateUnitary, expandUnitary, gramSchmidt
+from matrixUtil import zero_tol as tol, expandUnitary, gramSchmidt
+from unitaryGenerator import generateQubitSwapUnitary, generateQubitLeftRotateUnitary, generateQubitRightRotateUnitary
 
 class GenerateQubitSwapUnitaryTest(unittest.TestCase):
     def test_generate_qubit_swap_unitary_default(self):
