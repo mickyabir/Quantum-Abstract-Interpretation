@@ -38,7 +38,6 @@ class ExpandUnitaryTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(expandedUV, actualMatrix))
 
-
     def test_expand_unitary(self):
         U = np.random.rand(2, 2)
         V = np.random.rand(2, 2)
