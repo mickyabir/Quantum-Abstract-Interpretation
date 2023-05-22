@@ -27,12 +27,12 @@ def getSupport(A):
     return gsColumnVectors
 
 def getMatrixFromSpan(span):
-    dim = span[0].shape[0]
-    P_span = np.zeros((dim, dim), dtype=complex)
+    spanMatrix = None
 
-    for i in range(len(span)):
-        P_span[:, i] = span[i]
+    for v in span:
+        if spanMatrix is None:
+            spanMatrix = np.kron(v, v.conj().T).reshape((v.shape[0], v.shape[0]))
+        else:
+            spanMatrix += np.kron(v, v.conj().T).reshape((v.shape[0], v.shape[0]))
 
-    return P_span @ P_span.conj().T
-
-
+    return spanMatrix

@@ -1,9 +1,11 @@
+import cvxpy as cp
 import numpy as np
 
 from unitaryGenerator import generateQubitSwapUnitary, generateQubitRightRotateUnitary
 
 gs_tol = 1e-8
 zero_tol = 1e-6
+eigval_zero_tol = 1e-10
 
 # Trace out qubits in F from M, for n qubit system
 def partialTrace(M, n, F):
@@ -34,12 +36,15 @@ def partialTrace(M, n, F):
 # n is the total number of qubits to expand U to
 # F is the ordered list of qubits that U applies to
 # For now, assume F[i] < F[j] for i < j
-def expandUnitary(U, n, F):
+def expandUnitary(U, n, F, symbolic=False):
     I = np.identity(2)
     fullUnitary = U
 
     for i in range(len(F), n):
-        fullUnitary = np.kron(fullUnitary, I)
+        if symbolic:
+            fullUnitary = cp.kron(fullUnitary, I)
+        else:
+            fullUnitary = np.kron(fullUnitary, I)
 
     for i in range(0, len(F)):
         k = len(F) - i - 1
@@ -54,9 +59,30 @@ def normalized(a, axis=-1, order=2):
     l2[l2==0] = 1
     return a / np.expand_dims(l2, axis)
 
+def isSemidefinitePositive(A):
+    eigvals = np.linalg.eigvals(A)
+
+    eigvals.real[abs(eigvals.real) < eigval_zero_tol] = 0.0
+    eigvals.imag[abs(eigvals.imag) < eigval_zero_tol] = 0.0
+
+    return np.all(eigvals >= 0)
+
+    # return np.all(np.linalg.eigvals(A) >= 0)
+
+def innerProduct(u, v):
+    # return np.dot(u.conj().T, v)
+    return np.dot(u, v.conj().T)
+
 def vectorProjection(u, v):
-    v_norm = np.sqrt(np.dot(v.T, v).item())
-    proj = (np.dot(u.T, v).item() / v_norm ** 2) * v
+    u.real[abs(u.real) < zero_tol] = 0.0
+    u.imag[abs(u.imag) < zero_tol] = 0.0
+
+    if not u.any():
+        return np.zeros(u.shape[0], dtype=u.dtype)
+
+    u_inner = innerProduct(u, u)
+    vu_inner = innerProduct(v, u)
+    proj = (vu_inner / u_inner) * u
     return proj
 
 def gramSchmidt(vectors):
@@ -65,7 +91,7 @@ def gramSchmidt(vectors):
         u_i = vectors[i]
 
         for j in range(0, len(u_vectors)):
-            proj = vectorProjection(vectors[i], u_vectors[j])
+            proj = vectorProjection(u_vectors[j], vectors[i])
             u_i = u_i - proj
 
         u_i.real[abs(u_i.real) < zero_tol] = 0.0
@@ -74,7 +100,7 @@ def gramSchmidt(vectors):
         if u_i.any():
             u_vectors.append(u_i)
 
-    e_vectors = [u / np.sqrt(np.dot(u.T, u).item()) for u in u_vectors]
+    e_vectors = [u / np.sqrt(innerProduct(u, u)) for u in u_vectors if u.any()]
 
     return e_vectors
 

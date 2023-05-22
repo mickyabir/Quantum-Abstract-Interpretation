@@ -21,7 +21,8 @@ def gammaFunction(state, T):
 
         Q.append(intersectProjections(projectionIntersectionList, T[j]))
 
-    return AbstractState(state.n, T, Q)
+    observables = [obsv.copy() for obsv in state.observables]
+    return AbstractState(state.n, T, Q, observables)
 
 def applyGate(state, U, F):
     applyGateToProjection = lambda U, p: U @ p @ U.conj().T
@@ -34,7 +35,9 @@ def applyGate(state, U, F):
         expandedU = expandUnitary(U, len(state.S[i]), mappedF)
         evolvedExpandedU = applyGateToProjection(expandedU, state.projections[i])
         evolvedProjections.append(evolvedExpandedU)
-    return AbstractState(state.n, state.S, evolvedProjections)
+
+    observables = [obsv.copy() for obsv in state.observables]
+    return AbstractState(state.n, state.S, evolvedProjections, observables)
 
 def alphaFunction(state, S):
     P = []
@@ -59,17 +62,19 @@ def alphaFunction(state, S):
 
         P.append(intersectProjections(subsystemIntersectionList, S[i]))
 
-    return AbstractState(state.n, S, P)
+    observables = [obsv.copy() for obsv in state.observables]
+    return AbstractState(state.n, S, P, observables)
 
 def abstractStep(state, U, F):
     T = []
     for si in state.S:
         T.append(sorted(list(set(si).union(set(F)))))
 
+    # if F == [0, 4]:
+    #     import pdb
+    #     pdb.set_trace()
     concreteState = gammaFunction(state, T)
     evolvedState = applyGate(concreteState, U, F)
     evolvedAbstractState = alphaFunction(evolvedState, state.S)
 
     return evolvedAbstractState
-
-
