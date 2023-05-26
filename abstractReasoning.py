@@ -1,6 +1,6 @@
 from abstractStep import abstractStep
 from constraintsUtil import getFullDomain, getUnitRuleLHS, getUnitRuleRHS, fullDomainProjectionExpansion, fullDomainObservableExpansion
-from matrixUtil import isSemidefinitePositive, zero_tol
+from matrixUtil import isSemidefinitePositive, zero_tol, truncateComplexObject
 from solver import solveUnitRuleConstraints
 
 def verifyUnitRule(stateP, stateQ, U, F):
@@ -11,7 +11,7 @@ def verifyUnitRule(stateP, stateQ, U, F):
     gammaP = fullDomainProjectionExpansion(fullDomain, stateP, forwardMap)
     constraintRHS = getUnitRuleRHS(stateQ, U, F, gammaP)
 
-    constraint = constraintRHS - constraintLHS
+    constraint = truncateComplexObject(constraintRHS - constraintLHS)
     constraint.real[abs(constraint.real) < zero_tol] = 0.0
     constraint.imag[abs(constraint.imag) < zero_tol] = 0.0
     return isSemidefinitePositive(constraint)

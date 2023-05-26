@@ -6,6 +6,15 @@ from unitaryGenerator import generateQubitSwapUnitary, generateQubitRightRotateU
 gs_tol = 1e-8
 zero_tol = 1e-6
 eigval_zero_tol = 1e-10
+numpy_round_decimals = 14
+
+def truncateComplexObject(M):
+    if type(M) == np.ndarray:
+        return np.round(M, numpy_round_decimals)
+    # elif type(M) == list:
+    #     return [np.round(m, numpy_round_decimals) for m in M]
+
+    return M
 
 # Trace out qubits in F from M, for n qubit system
 def partialTrace(M, n, F):
@@ -30,7 +39,7 @@ def partialTrace(M, n, F):
             rotateUndo = generateQubitRightRotateUnitary(currentSystemSize, F[i])
             currentMatrix = rotateUndo @ currentMatrix @ rotateUndo.T
 
-    return currentMatrix
+    return truncateComplexObject(currentMatrix)
 
 # U is the unitary
 # n is the total number of qubits to expand U to
@@ -51,7 +60,10 @@ def expandUnitary(U, n, F, symbolic=False):
         swapGate = generateQubitSwapUnitary(n, k, F[k])
         fullUnitary = swapGate @ fullUnitary @ swapGate
 
-    return fullUnitary
+    if type(fullUnitary) == np.ndarray:
+        return np.round(fullUnitary, numpy_round_decimals)
+
+    return truncateComplexObject(fullUnitary)
 
 # from https://stackoverflow.com/questions/21030391/how-to-normalize-a-numpy-array-to-a-unit-vector
 def normalized(a, axis=-1, order=2):
@@ -67,10 +79,7 @@ def isSemidefinitePositive(A):
 
     return np.all(eigvals >= 0)
 
-    # return np.all(np.linalg.eigvals(A) >= 0)
-
 def innerProduct(u, v):
-    # return np.dot(u.conj().T, v)
     return np.dot(u, v.conj().T)
 
 def vectorProjection(u, v):
@@ -83,7 +92,8 @@ def vectorProjection(u, v):
     u_inner = innerProduct(u, u)
     vu_inner = innerProduct(v, u)
     proj = (vu_inner / u_inner) * u
-    return proj
+
+    return truncateComplexObject(proj)
 
 def gramSchmidt(vectors):
     u_vectors = []
@@ -100,7 +110,7 @@ def gramSchmidt(vectors):
         if u_i.any():
             u_vectors.append(u_i)
 
-    e_vectors = [u / np.sqrt(innerProduct(u, u)) for u in u_vectors if u.any()]
+    e_vectors = [truncateComplexObject(u / np.sqrt(innerProduct(u, u))) for u in u_vectors if u.any()]
 
     return e_vectors
 

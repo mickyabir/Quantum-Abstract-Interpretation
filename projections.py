@@ -1,6 +1,6 @@
 import numpy as np
 
-from matrixUtil import gramSchmidt
+from matrixUtil import gramSchmidt, truncateComplexObject
 
 def intersectProjections(projections, tj):
     expandedUnion = None
@@ -19,7 +19,7 @@ def intersectProjections(projections, tj):
 
     finalSupportMatrix = np.identity(2 ** len(tj)) - complementSupportMatrix
 
-    return finalSupportMatrix
+    return truncateComplexObject(finalSupportMatrix)
 
 def getSupport(A):
     columnVectors = [A[:, i] for i in range(A.shape[0])]
@@ -35,4 +35,4 @@ def getMatrixFromSpan(span):
         else:
             spanMatrix += np.kron(v, v.conj().T).reshape((v.shape[0], v.shape[0]))
 
-    return spanMatrix
+    return truncateComplexObject(spanMatrix)

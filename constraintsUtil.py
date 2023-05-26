@@ -1,6 +1,6 @@
 from functools import reduce
 
-from matrixUtil import expandUnitary
+from matrixUtil import expandUnitary, truncateComplexObject
 from projections import intersectProjections
 
 # Split the domain S into the operating domain set
@@ -88,6 +88,6 @@ def getUnitRuleRHS(state, U, F, gammaP, symbolic=False):
     mappedF = applyForwardMap(F)
     U_F = expandUnitary(U, len(fullDomain), mappedF)
 
-    return gammaP @ U_F.conj().T @ M_B @ U_F @ gammaP
+    return truncateComplexObject(gammaP @ U_F.conj().T @ M_B @ U_F @ gammaP)
 
 
