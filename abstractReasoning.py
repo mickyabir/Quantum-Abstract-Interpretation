@@ -2,7 +2,7 @@ import numpy as np
 
 from abstractStep import abstractStep
 from constraintsUtil import getFullDomain, getUnitRuleLHS, getUnitRuleRHS, fullDomainProjectionExpansion, fullDomainObservableExpansion
-from matrixUtil import isSemidefinitePositive, zero_tol, truncateComplexObject
+from matrixUtil import isSemidefinitePositive, zero_tol, truncateComplexObject, expandUnitary
 from solver import solveUnitRuleConstraints
 
 def verifyUnitRule(stateP, stateQ, U, F):
@@ -26,7 +26,13 @@ def verifyUnitRule(stateP, stateQ, U, F):
 
         assert(isSemidefinitePositive(newConstraint))
 
-        newObservable = newConstraint + constraintLHS
+        fullDomain, domainIndices = getFullDomain(stateP, F)
+        forwardMap = {fullDomain[i]:i for i in range(len(fullDomain))}
+        applyForwardMap = lambda S: [forwardMap[si] for si in S]
+        mappedF = applyForwardMap(F)
+        U_F = expandUnitary(U, len(fullDomain), mappedF)
+
+        newObservable = U_F.conj().T @ (newConstraint + constraintLHS) @ U_F
 
         assert(len(domainIndices) == 1, 'Can only fix if M_B = B_i for now')
 
