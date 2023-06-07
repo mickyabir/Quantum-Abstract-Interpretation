@@ -1,3 +1,5 @@
+import numpy as np
+
 from functools import reduce
 
 from matrixUtil import expandUnitary, truncateComplexObject
@@ -47,14 +49,14 @@ def fullDomainProjectionExpansion(fullDomain, state, forwardMap):
                 projectionIntersectionList.append(expandedProjection)
     return intersectProjections(projectionIntersectionList, fullDomain)
 
-def fullDomainObservableExpansion(fullDomain, domainIndices, state, forwardMap, symbolic=False):
+def fullDomainObservableExpansion(fullDomain, domainIndices, state, forwardMap, backend=np):
     applyForwardMap = lambda S: [forwardMap[si] for si in S]
 
     M_A = None
     # for i in range(len(domainIndices)):
     for i in domainIndices:
         F = applyForwardMap(state.S[i])
-        expandedObservable = expandUnitary(state.observables[i], len(fullDomain), F, symbolic=symbolic)
+        expandedObservable = expandUnitary(state.observables[i], len(fullDomain), F, backend=backend)
 
         if M_A is None:
             M_A = expandedObservable
@@ -78,12 +80,12 @@ def getUnitRuleLHS(state, F):
 
     return gammaP @ M_A @ gammaP
 
-def getUnitRuleRHS(state, U, F, gammaP, symbolic=False):
+def getUnitRuleRHS(state, U, F, gammaP, backend=np):
     fullDomain, domainIndices = getFullDomain(state, F)
     forwardMap = {fullDomain[i]:i for i in range(len(fullDomain))}
     applyForwardMap = lambda S: [forwardMap[si] for si in S]
 
-    M_B = fullDomainObservableExpansion(fullDomain, domainIndices, state, forwardMap, symbolic=symbolic)
+    M_B = fullDomainObservableExpansion(fullDomain, domainIndices, state, forwardMap, backend=backend)
 
     mappedF = applyForwardMap(F)
     U_F = expandUnitary(U, len(fullDomain), mappedF)

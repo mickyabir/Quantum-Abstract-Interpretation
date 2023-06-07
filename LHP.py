@@ -82,12 +82,15 @@ def generateMiller():
     nextState = abstractReasoningStep(nextState, CNOT, [0, 1])
     print(nextState)
 
-    import pdb
-    pdb.set_trace()
+    # import pdb
+    # pdb.set_trace()
     nextState = abstractReasoningStep(nextState, H, [2])
     print(nextState)
     nextState = abstractReasoningStep(nextState, H, [0])
     print(nextState)
+
+    import pdb
+    pdb.set_trace()
     nextState = abstractReasoningStep(nextState, T, [2])
     print(nextState)
     nextState = abstractReasoningStep(nextState, T, [1])

@@ -45,15 +45,12 @@ def partialTrace(M, n, F):
 # n is the total number of qubits to expand U to
 # F is the ordered list of qubits that U applies to
 # For now, assume F[i] < F[j] for i < j
-def expandUnitary(U, n, F, symbolic=False):
+def expandUnitary(U, n, F, backend=np):
     I = np.identity(2)
     fullUnitary = U
 
     for i in range(len(F), n):
-        if symbolic:
-            fullUnitary = cp.kron(fullUnitary, I)
-        else:
-            fullUnitary = np.kron(fullUnitary, I)
+            fullUnitary = backend.kron(fullUnitary, I)
 
     for i in range(0, len(F)):
         k = len(F) - i - 1
