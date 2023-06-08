@@ -75,7 +75,8 @@ def abstractReasoningStep(state, U, F):
     if any(obs is None for obs in evolvedAbstractState.observables):
         # Assume single observable
         _, domainIndices = getFullDomain(state, F)
-        evolvedAbstractState.observables[domainIndices[0]] = state.observables[domainIndices[0]]
+        for idx in domainIndices:
+            evolvedAbstractState.observables[idx] = state.observables[idx]
 
     assert(verifyUnitRule(state, evolvedAbstractState, U, F))
 
