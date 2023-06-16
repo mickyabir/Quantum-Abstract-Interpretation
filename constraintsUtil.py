@@ -78,7 +78,8 @@ def getUnitRuleLHS(state, F):
     gammaP = fullDomainProjectionExpansion(fullDomain, state, forwardMap)
     M_A = fullDomainObservableExpansion(fullDomain, domainIndices, state, forwardMap)
 
-    return gammaP @ M_A @ gammaP
+    # return gammaP @ M_A @ gammaP
+    return M_A
 
 def getUnitRuleRHS(state, U, F, gammaP, backend=np):
     fullDomain, domainIndices = getFullDomain(state, F)
@@ -90,6 +91,7 @@ def getUnitRuleRHS(state, U, F, gammaP, backend=np):
     mappedF = applyForwardMap(F)
     U_F = expandUnitary(U, len(fullDomain), mappedF)
 
-    return truncateComplexObject(gammaP @ U_F.conj().T @ M_B @ U_F @ gammaP)
+    # return truncateComplexObject(gammaP @ U_F.conj().T @ M_B @ U_F @ gammaP)
+    return truncateComplexObject(U_F.conj().T @ M_B @ U_F)
 
 

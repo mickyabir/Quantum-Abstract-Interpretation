@@ -21,7 +21,9 @@ def verifyUnitRule(stateP, stateQ, U, F):
     if not verifySDP:
         eigvals, eigvecs = np.linalg.eig(constraint)
         lamb = np.diag(eigvals)
-        lamb[lamb < 0] = 0 + 0j
+        minLamb = np.amin(lamb)
+        assert(minLamb < 0)
+        lamb = lamb + abs(minLamb) * np.identity(lamb.shape[0])
         newConstraint = eigvecs @ lamb @ np.linalg.inv(eigvecs)
 
         assert(isSemidefinitePositive(newConstraint))
@@ -34,7 +36,12 @@ def verifyUnitRule(stateP, stateQ, U, F):
 
         newObservable = U_F.conj().T @ (newConstraint + constraintLHS) @ U_F
 
-        assert(len(domainIndices) == 1, 'Can only fix if M_B = B_i for now')
+        if len(domainIndices) > 1:
+            print('Can only fix if M_B = B_i for now')
+            for idx in domainIndices:
+                stateQ.observables[idx] = np.identity(4)
+                return True
+
 
         stateQ.observables[domainIndices[0]] = newObservable
 

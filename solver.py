@@ -43,6 +43,7 @@ def solveUnitRuleConstraints(constraintLHS, state, fullDomain, domainIndices, ga
     unitRuleMatrixRealForm = generatePSDConstraint(unitRuleMatrix)
     constraints.append(unitRuleMatrixRealForm >= 0)
 
+    # prob = cp.Problem(cp.Minimize(0), constraints)
     prob = cp.Problem(cp.Minimize(0), constraints)
     # prob.solve()
     # prob.solve(solver='ECOS_BB')
