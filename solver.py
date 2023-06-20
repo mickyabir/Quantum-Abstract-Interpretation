@@ -22,9 +22,11 @@ def solveUnitRuleConstraints(constraintLHS, state, fullDomain, domainIndices, ga
     constraints = []
 
     Bs = []
+    traceSum = 0
     for i in domainIndices:
         domainSize = len(state.S[i])
         state.observables[i] = cp.Variable((2 ** domainSize, 2 ** domainSize), hermitian=True)
+        traceSum += cp.trace(state.observables[i])
         Bs.append(state.observables[i])
         I = np.identity(2 ** domainSize)
 
@@ -44,7 +46,7 @@ def solveUnitRuleConstraints(constraintLHS, state, fullDomain, domainIndices, ga
     constraints.append(unitRuleMatrixRealForm >= 0)
 
     # prob = cp.Problem(cp.Minimize(0), constraints)
-    prob = cp.Problem(cp.Minimize(0), constraints)
+    prob = cp.Problem(cp.Minimize(traceSum), constraints)
     # prob.solve()
     # prob.solve(solver='ECOS_BB')
     prob.solve(solver='CVXOPT')
