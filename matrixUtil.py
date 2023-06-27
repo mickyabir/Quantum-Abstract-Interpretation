@@ -11,8 +11,6 @@ numpy_round_decimals = 14
 def truncateComplexObject(M):
     if type(M) == np.ndarray:
         return np.round(M, numpy_round_decimals)
-    # elif type(M) == list:
-    #     return [np.round(m, numpy_round_decimals) for m in M]
 
     return M
 

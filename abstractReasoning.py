@@ -5,6 +5,16 @@ from constraintsUtil import getFullDomain, getUnitRuleLHS, getUnitRuleRHS, fullD
 from matrixUtil import isSemidefinitePositive, zero_tol, truncateComplexObject, expandUnitary
 from solver import solveUnitRuleConstraints
 
+def validateFinalInequality(initialState, finalState):
+    sumInitial = 0
+    sumFinal = 0
+
+    for i in range(len(initialState.S)):
+        sumInitial += np.trace(initialState.projections[i] @ initialState.observables[i])
+        sumFinal += np.trace(finalState.projections[i] @ finalState.observables[i])
+
+    assert(sumInitial <= sumFinal)
+
 def verifyUnitRule(stateP, stateQ, U, F):
     constraintLHS = getUnitRuleLHS(stateP, F)
 
@@ -54,7 +64,8 @@ def verifyUnitRule(stateP, stateQ, U, F):
 
         # Last ditch effort
         if not verifySDP:
-            stateQ.observables[domainIndices[0]] = stateP.observables[domainIndices[0]]
+            for idx in domainIndices:
+                stateQ.observables[idx] = stateP.observables[idx]
 
             # Verify new observable
             constraintRHS = getUnitRuleRHS(stateQ, U, F, gammaP)
@@ -67,11 +78,19 @@ def verifyUnitRule(stateP, stateQ, U, F):
 
 # Updates the observables of stateQ according to the Unit Rule
 def applyUnitRule(stateP, stateQ, U, F):
-    constraintLHS = getUnitRuleLHS(stateP, F)
-
     fullDomain, domainIndices = getFullDomain(stateP, F)
     forwardMap = {fullDomain[i]:i for i in range(len(fullDomain))}
+
+    if len(F) == 1:
+        applyForwardMap = lambda S: [forwardMap[si] for si in S]
+        mappedF = applyForwardMap(F)
+        U_F = expandUnitary(U, len(fullDomain), mappedF)
+        stateQ.observables[domainIndices[0]] = U_F @ stateP.observables[domainIndices[0]] @ U_F
+        return
+
     gammaP = fullDomainProjectionExpansion(fullDomain, stateP, forwardMap)
+
+    constraintLHS = getUnitRuleLHS(stateP, F)
 
     solveUnitRuleConstraints(constraintLHS, stateQ, fullDomain, domainIndices, gammaP, U, F)
 
@@ -80,7 +99,7 @@ def abstractReasoningStep(state, U, F):
     applyUnitRule(state, evolvedAbstractState, U, F)
 
     if any(obs is None for obs in evolvedAbstractState.observables):
-        # Assume single observable
+        # Try to fill in missing observables with previous the observables
         _, domainIndices = getFullDomain(state, F)
         for idx in domainIndices:
             evolvedAbstractState.observables[idx] = state.observables[idx]
