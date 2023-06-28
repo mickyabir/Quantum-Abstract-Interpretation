@@ -59,7 +59,7 @@ def generateLinearDomain(n):
             except:
                 import pdb
                 pdb.set_trace()
-                nextState = abstractReasoningStep(nextState, H, [i])
+                nextState = abstractReasoningStep(nextState, controlPhaseGate, [i, i + j - 1])
 
     validateFinalInequality(initialState, nextState)
 
