@@ -5,9 +5,31 @@ from functools import reduce
 from matrixUtil import expandUnitary, truncateComplexObject
 from projections import intersectProjections
 
+def splitDomainNew(S, F):
+    indexList = []
+    remainingF = F.copy()
+    for i in range(len(S)):
+        for f in remainingF:
+            if f in S[i]:
+                indexList.append(i)
+                remainingF.remove(f)
+
+                if not remainingF:
+                    return indexList
+
+    return indexList
+
 # Split the domain S into the operating domain set
 # Returns indices into S for the active domain
 def splitDomain(S, F):
+    # return splitDomainNew(S, F)
+
+    # If the domain is the single domain:
+    if max(len(s) for s in S) == 1:
+        return [S.index([f]) for f in F]
+    elif len(S) == 1:
+        return [0]
+
     # For now, assume domain of the form (i, i + 1)
     # TODO: Generalize
     # TODO: Optimize if statements/write better

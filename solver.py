@@ -18,7 +18,7 @@ def generatePSDConstraint(M):
 
     return finalMatrix
 
-def solveUnitRuleConstraints(constraintLHS, state, fullDomain, domainIndices, gammaP, U, F):
+def solveUnitRuleConstraints(constraintLHS, state, fullDomain, domainIndices, gammaP, U, F, objective=None):
     constraints = []
 
     Bs = []
@@ -47,9 +47,9 @@ def solveUnitRuleConstraints(constraintLHS, state, fullDomain, domainIndices, ga
 
     # prob = cp.Problem(cp.Minimize(0), constraints)
     prob = cp.Problem(cp.Minimize(traceSum), constraints)
-    prob.solve(solver='CVXOPT')
+    # prob.solve(solver='CVXOPT')
     # prob.solve(solver='CBC')
-    # prob.solve(solver='ECOS_BB')
+    prob.solve(solver='ECOS_BB')
 
     for i in domainIndices:
         state.observables[i] = truncateComplexObject(state.observables[i].value)

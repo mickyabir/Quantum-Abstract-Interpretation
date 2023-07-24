@@ -49,15 +49,17 @@ def generateLinearDomain(n):
     initialObsvMinusMinus = 0.25 * np.array([[1, -1, -1, 1], [-1, 1, 1, -1], [-1, 1, 1, -1], [1, -1, -1, 1]], dtype=complex)
 
     # |a|^2 >= 0.5
-    initialObsvs = [initialObsvPlusZero] + [initialObsvPlusPlus for _ in range(n - 2)]
+    # initialObsvs = [initialObsvPlusZero] + [initialObsvPlusPlus for _ in range(n - 2)]
 
     # |a|^2 <= 0.5
-    # initialObsvs = [initialObsvMinusZero] + [initialObsvMinusMinus for _ in range(n - 2)]
+    initialObsvs = [initialObsvMinusZero] + [initialObsvMinusMinus for _ in range(n - 2)]
 
     initialState = AbstractState(n, S, [initialProj for _ in range(n - 1)], initialObsvs)
 
     H = 1/np.sqrt(2) * np.array([[1, 1],[1, -1]], dtype=complex)
     X = np.array([[0, 1],[1, 0]], dtype=complex)
+    T = np.array([[1, 0],[0, np.exp(1j * np.pi / 4)]], dtype=complex)
+    IPhase = np.array([[1, 0],[0, 1j]], dtype=complex)
     CNOT = np.array([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
 
     nextState = abstractReasoningStep(initialState, H, [0])
@@ -70,6 +72,17 @@ def generateLinearDomain(n):
             pdb.set_trace()
             nextState = abstractReasoningStep(nextState, CNOT, [0, i])
             print(nextState)
+
+    import random
+    for i in range(n):
+        try:
+            nextState = abstractReasoningStep(nextState, T, [i])
+        except:
+            import pdb
+            pdb.set_trace()
+            nextState = abstractReasoningStep(nextState, T, [i])
+
+
 
     print(nextState)
 

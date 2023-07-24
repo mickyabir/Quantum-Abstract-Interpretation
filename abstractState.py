@@ -1,4 +1,23 @@
+from enum import Enum
+
 from pprint import pprint, pprint_repr
+
+class Domain(Enum):
+    SINGLE = 1
+    LINEAR = 2
+
+def generateDomain(n, domain=Domain.LINEAR):
+    if domain == Domain.SINGLE:
+        return [[i] for i in range(n)]
+    elif domain == Domain.LINEAR:
+        S = []
+
+        for i in range(n - 1):
+            S.append([i, i + 1])
+
+        return S
+    else:
+        raise NotImplementedError
 
 class AbstractState():
     def __init__(self, n, S, projections, observables = None):

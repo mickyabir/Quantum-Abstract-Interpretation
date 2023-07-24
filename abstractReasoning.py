@@ -15,7 +15,7 @@ def validateFinalInequality(initialState, finalState):
 
     assert(sumInitial <= sumFinal)
 
-def verifyUnitRule(stateP, stateQ, U, F):
+def verifyOrFixUnitRule(stateP, stateQ, U, F):
     constraintLHS = getUnitRuleLHS(stateP, F)
 
     fullDomain, domainIndices = getFullDomain(stateP, F)
@@ -29,76 +29,70 @@ def verifyUnitRule(stateP, stateQ, U, F):
     verifySDP = isSemidefinitePositive(constraint)
 
     # Attempt to fix non-SDP RHS
-    if not verifySDP:
-        if len(domainIndices) == 1:
-            eigvals, eigvecs = np.linalg.eig(constraint)
-            lamb = np.diag(eigvals)
-            minLamb = np.amin(lamb)
-            assert(minLamb < 0)
-            lamb = lamb + abs(minLamb) * np.identity(lamb.shape[0])
-            newConstraint = eigvecs @ lamb @ np.linalg.inv(eigvecs)
+    if not verifySDP and len(domainIndices) == 1:
+        eigvals, eigvecs = np.linalg.eig(constraint)
+        lamb = np.diag(eigvals)
+        minLamb = np.amin(lamb)
+        assert(minLamb < 0)
+        lamb = lamb + abs(minLamb) * np.identity(lamb.shape[0])
+        newConstraint = eigvecs @ lamb @ np.linalg.inv(eigvecs)
 
-            assert(isSemidefinitePositive(newConstraint))
+        assert(isSemidefinitePositive(newConstraint))
 
-            applyForwardMap = lambda S: [forwardMap[si] for si in S]
-            mappedF = applyForwardMap(F)
-            U_F = expandUnitary(U, len(fullDomain), mappedF)
+        applyForwardMap = lambda S: [forwardMap[si] for si in S]
+        mappedF = applyForwardMap(F)
+        U_F = expandUnitary(U, len(fullDomain), mappedF)
 
-            newObservable = U_F.conj().T @ (newConstraint + constraintLHS) @ U_F
-            stateQ.observables[domainIndices[0]] = newObservable
+        newObservable = U_F.conj().T @ (newConstraint + constraintLHS) @ U_F
+        stateQ.observables[domainIndices[0]] = newObservable
 
-            # Verify new observable
-            constraintRHS = getUnitRuleRHS(stateQ, U, F, gammaP)
-            constraint = truncateComplexObject(constraintRHS - constraintLHS)
-            constraint.real[abs(constraint.real) < zero_tol] = 0.0
-            constraint.imag[abs(constraint.imag) < zero_tol] = 0.0
-            verifySDP = isSemidefinitePositive(constraint)
-#         else:
-#             print('Can only fix if M_B = B_i for now')
-#             for idx in domainIndices:
-#                 stateQ.observables[idx] = np.identity(4)
-#                 return True
+        # Verify new observable
+        constraintRHS = getUnitRuleRHS(stateQ, U, F, gammaP)
+        constraint = truncateComplexObject(constraintRHS - constraintLHS)
+        constraint.real[abs(constraint.real) < zero_tol] = 0.0
+        constraint.imag[abs(constraint.imag) < zero_tol] = 0.0
+        verifySDP = isSemidefinitePositive(constraint)
 
-        if not verifySDP:
-            # Try previous obserables
-            for idx in domainIndices:
-                tempObservable = stateQ.observables[idx]
-                stateQ.observables[idx] = stateP.observables[idx]
+    if verifySDP:
+        return
 
-                # Verify new observable
-                constraintRHS = getUnitRuleRHS(stateQ, U, F, gammaP)
-                constraint = truncateComplexObject(constraintRHS - constraintLHS)
-                constraint.real[abs(constraint.real) < zero_tol] = 0.0
-                constraint.imag[abs(constraint.imag) < zero_tol] = 0.0
-                verifySDP = isSemidefinitePositive(constraint)
+    # Try previous obserables
+    for idx in domainIndices:
+        tempObservable = stateQ.observables[idx]
+        stateQ.observables[idx] = stateP.observables[idx]
 
-                if verifySDP:
-                    return True
+        # Verify new observable
+        constraintRHS = getUnitRuleRHS(stateQ, U, F, gammaP)
+        constraint = truncateComplexObject(constraintRHS - constraintLHS)
+        constraint.real[abs(constraint.real) < zero_tol] = 0.0
+        constraint.imag[abs(constraint.imag) < zero_tol] = 0.0
+        verifySDP = isSemidefinitePositive(constraint)
 
-                stateQ.observables[idx] = tempObservable
+        if verifySDP:
+            return
 
-            # Try single identity replacement
-            for idx in domainIndices:
-                tempObservable = stateQ.observables[idx]
-                stateQ.observables[idx] = np.identity(4, dtype=complex)
+        stateQ.observables[idx] = tempObservable
 
-                # Verify new observable
-                constraintRHS = getUnitRuleRHS(stateQ, U, F, gammaP)
-                constraint = truncateComplexObject(constraintRHS - constraintLHS)
-                constraint.real[abs(constraint.real) < zero_tol] = 0.0
-                constraint.imag[abs(constraint.imag) < zero_tol] = 0.0
-                verifySDP = isSemidefinitePositive(constraint)
+    # Try single identity replacement
+    for idx in domainIndices:
+        tempObservable = stateQ.observables[idx]
+        stateQ.observables[idx] = np.identity(stateQ.observables[idx].shape[0], dtype=complex)
 
-                if verifySDP:
-                    return True
+        # Verify new observable
+        constraintRHS = getUnitRuleRHS(stateQ, U, F, gammaP)
+        constraint = truncateComplexObject(constraintRHS - constraintLHS)
+        constraint.real[abs(constraint.real) < zero_tol] = 0.0
+        constraint.imag[abs(constraint.imag) < zero_tol] = 0.0
+        verifySDP = isSemidefinitePositive(constraint)
 
-                stateQ.observables[idx] = tempObservable
+        if verifySDP:
+            return
 
-            # Set all working set to identity
-            for idx in domainIndices:
-                stateQ.observables[idx] = np.identity(4)
+        stateQ.observables[idx] = tempObservable
 
-    return verifySDP
+    # Set all working set to identity
+    for idx in domainIndices:
+        stateQ.observables[idx] = np.identity(stateQ.observables[idx].shape[0], dtype=complex)
 
 # Updates the observables of stateQ according to the Unit Rule
 def applyUnitRule(stateP, stateQ, U, F):
@@ -109,7 +103,7 @@ def applyUnitRule(stateP, stateQ, U, F):
         applyForwardMap = lambda S: [forwardMap[si] for si in S]
         mappedF = applyForwardMap(F)
         U_F = expandUnitary(U, len(fullDomain), mappedF)
-        stateQ.observables[domainIndices[0]] = U_F @ stateP.observables[domainIndices[0]] @ U_F
+        stateQ.observables[domainIndices[0]] = U_F @ stateP.observables[domainIndices[0]] @ U_F.conj().T
         return
 
     gammaP = fullDomainProjectionExpansion(fullDomain, stateP, forwardMap)
@@ -129,6 +123,15 @@ def abstractReasoningStep(state, U, F):
             if evolvedAbstractState.observables[idx] is None:
                 evolvedAbstractState.observables[idx] = state.observables[idx]
 
-    assert(verifyUnitRule(state, evolvedAbstractState, U, F))
+    verifyOrFixUnitRule(state, evolvedAbstractState, U, F)
+
+    # Reinforce the bound B <= I
+    for i in range(len(evolvedAbstractState.observables)):
+        obs = evolvedAbstractState.observables[i]
+        I = np.identity(obs.shape[0], dtype=complex)
+        constraint = truncateComplexObject(obs - I)
+
+        if isSemidefinitePositive(constraint):
+            evolvedAbstractState.observables[i] = I
 
     return evolvedAbstractState
