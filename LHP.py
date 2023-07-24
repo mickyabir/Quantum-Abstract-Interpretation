@@ -9,8 +9,9 @@ if __name__ == '__main__':
     import sys
     np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
 
-    n = 6
+    n = 20
+    GHZ.generateLinearDomain(n)
+    GHZ.generateLinearDomain(n, plus=False)
     # GHZ.generateLinearDomain(n)
     # Miller.generateMiller()
-    # QFT.generateLinearDomain(n)
-    QFT.generateSingleDomain(n)
+    # QFT.generateSingleDomain(n)

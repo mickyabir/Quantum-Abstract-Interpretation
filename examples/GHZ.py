@@ -1,7 +1,11 @@
 import numpy as np
 
+from gates import *
+from states import *
+
 from abstractReasoning import abstractReasoningStep, validateFinalInequality
-from abstractState import AbstractState
+from abstractState import AbstractState, Domain, generateDomain
+from prover import Prover
 
 def computeInequality(obsA, obsB):
     zVec = np.array([1, 0], dtype=complex)
@@ -30,62 +34,38 @@ def computeInequality(obsA, obsB):
     print(f'|a|^2 {b00eq} {bound00}')
     print(f'|b|^2 {b11eq} {bound11}')
 
-def generateLinearDomain(n):
-    S = []
+def generateLinearDomain(n, plus=True):
+    S = generateDomain(n, Domain.LINEAR)
 
-    for i in range(n - 1):
-        S.append([i, i + 1])
+    initialProj = generateDensityMatrixFromQubits([Zero, Zero])
+    initialProjs = [initialProj for _ in range(n - 1)]
 
-    initialProj = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
-    initialObsvPlusZero = np.array([[0.5, 0, 0.5, 0], [0, 0, 0, 0], [0.5, 0, 0.5, 0], [0, 0, 0, 0]], dtype=complex)
-    initialObsvPlusOne = np.array([[0, 0, 0, 0], [0, 0.5, 0, 0.5], [0, 0, 0, 0], [0, 0.5, 0, 0.5]], dtype=complex)
-    initialObsvMinusZero = np.array([[0.5, 0, -0.5, 0], [0, 0, 0, 0], [-0.5, 0, 0.5, 0], [0, 0, 0, 0]], dtype=complex)
-    initialObsvMinusOne = np.array([[0, 0, 0, 0], [0, 0.5, 0, -0.5], [0, 0, 0, 0], [0, -0.5, 0, 0.5]], dtype=complex)
-    initialObsvZeroPlus = np.array([[0.5, 0.5, 0, 0], [0.5, 0.5, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
-    initialObsvOnePlus = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0.5, 0.5], [0, 0, 0.5, 0.5]], dtype=complex)
-    initialObsvZeroMinus = np.array([[0.5, -0.5, 0, 0], [-0.5, 0.5, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=complex)
-    initialObsvOneMinus = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0.5, -0.5], [0, 0, -0.5, 0.5]], dtype=complex)
-    initialObsvPlusPlus = 0.25 * np.array([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], dtype=complex)
-    initialObsvMinusMinus = 0.25 * np.array([[1, -1, -1, 1], [-1, 1, 1, -1], [-1, 1, 1, -1], [1, -1, -1, 1]], dtype=complex)
-
+    if plus:
     # |a|^2 >= 0.5
-    # initialObsvs = [initialObsvPlusZero] + [initialObsvPlusPlus for _ in range(n - 2)]
+        initialObsvPlusZero = generateDensityMatrixFromQubits([Plus, Zero])
+        initialObsvPlusPlus = generateDensityMatrixFromQubits([Plus, Plus])
+        initialObsvs = [initialObsvPlusZero] + [initialObsvPlusPlus for _ in range(n - 2)]
+    else:
+        # |a|^2 <= 0.5
+        initialObsvMinusZero = generateDensityMatrixFromQubits([Minus, Zero])
+        initialObsvMinusMinus = generateDensityMatrixFromQubits([Minus, Minus])
+        initialObsvs = [initialObsvMinusZero] + [initialObsvMinusMinus for _ in range(n - 2)]
 
-    # |a|^2 <= 0.5
-    initialObsvs = [initialObsvMinusZero] + [initialObsvMinusMinus for _ in range(n - 2)]
+    initialState = AbstractState(n, S, initialProjs, initialObsvs)
 
-    initialState = AbstractState(n, S, [initialProj for _ in range(n - 1)], initialObsvs)
-
-    H = 1/np.sqrt(2) * np.array([[1, 1],[1, -1]], dtype=complex)
-    X = np.array([[0, 1],[1, 0]], dtype=complex)
-    T = np.array([[1, 0],[0, np.exp(1j * np.pi / 4)]], dtype=complex)
-    IPhase = np.array([[1, 0],[0, 1j]], dtype=complex)
-    CNOT = np.array([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
-
-    nextState = abstractReasoningStep(initialState, H, [0])
+    prover = Prover(initialState)
+    prover.addOp(H, [0])
 
     for i in range(1, n):
-        try:
-            nextState = abstractReasoningStep(nextState, CNOT, [0, i])
-        except:
-            import pdb
-            pdb.set_trace()
-            nextState = abstractReasoningStep(nextState, CNOT, [0, i])
-            print(nextState)
+        prover.addOp(CNOT, [0, i])
 
     import random
     for i in range(n):
-        try:
-            nextState = abstractReasoningStep(nextState, T, [i])
-        except:
-            import pdb
-            pdb.set_trace()
-            nextState = abstractReasoningStep(nextState, T, [i])
+            prover.addOp(T, [i])
 
+    while prover.apply():
+        continue
 
+    prover.validate()
+    computeInequality(initialObsvs, prover.currentState.observables)
 
-    print(nextState)
-
-    validateFinalInequality(initialState, nextState)
-
-    computeInequality(initialObsvs, nextState.observables)

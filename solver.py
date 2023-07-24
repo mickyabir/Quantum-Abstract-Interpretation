@@ -4,6 +4,7 @@ import numpy as np
 from abstractState import AbstractState
 from constraintsUtil import getUnitRuleRHS
 from matrixUtil import truncateComplexObject
+from objective import TraceSum
 
 def generatePSDConstraint(M):
     topLeft = np.array([[1, 0], [0, 0]])
@@ -18,15 +19,13 @@ def generatePSDConstraint(M):
 
     return finalMatrix
 
-def solveUnitRuleConstraints(constraintLHS, state, fullDomain, domainIndices, gammaP, U, F, objective=None):
+def solveUnitRuleConstraints(constraintLHS, state, fullDomain, domainIndices, gammaP, U, F, objectiveFunction=None):
     constraints = []
 
     Bs = []
-    traceSum = 0
     for i in domainIndices:
         domainSize = len(state.S[i])
         state.observables[i] = cp.Variable((2 ** domainSize, 2 ** domainSize), hermitian=True)
-        traceSum += cp.trace(state.observables[i])
         Bs.append(state.observables[i])
         I = np.identity(2 ** domainSize)
 
@@ -45,8 +44,10 @@ def solveUnitRuleConstraints(constraintLHS, state, fullDomain, domainIndices, ga
     unitRuleMatrixRealForm = generatePSDConstraint(unitRuleMatrix)
     constraints.append(unitRuleMatrixRealForm >= 0)
 
-    # prob = cp.Problem(cp.Minimize(0), constraints)
-    prob = cp.Problem(cp.Minimize(traceSum), constraints)
+    if objectiveFunction is None:
+        objectiveFunction = TraceSum()
+    objective = objectiveFunction.generateObjective(state, fullDomain, domainIndices, gammaP, U, F)
+    prob = cp.Problem(cp.Minimize(objective), constraints)
     # prob.solve(solver='CVXOPT')
     # prob.solve(solver='CBC')
     prob.solve(solver='ECOS_BB')
