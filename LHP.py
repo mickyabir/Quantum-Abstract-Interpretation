@@ -1,7 +1,7 @@
 import numpy as np
 
 from abstractReasoning import abstractReasoningStep, validateFinalInequality
-from abstractState import AbstractState
+from abstractState import AbstractState, Domain
 
 from examples import GHZ, Miller, QFT
 
@@ -10,8 +10,9 @@ if __name__ == '__main__':
     np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
 
     n = 20
-    GHZ.generateLinearDomain(n)
-    GHZ.generateLinearDomain(n, plus=False)
-    # GHZ.generateLinearDomain(n)
+    GHZ.generate(n)
+    GHZ.generate(n, plus=False)
+    # GHZ.generate(n)
     # Miller.generateMiller()
-    # QFT.generateSingleDomain(n)
+    # QFT.generate(n, domain=Domain.SINGLE)
+    # QFT.generate(n, domain=Domain.LINEAR)

@@ -34,22 +34,26 @@ def computeInequality(obsA, obsB):
     print(f'|a|^2 {b00eq} {bound00}')
     print(f'|b|^2 {b11eq} {bound11}')
 
-def generateLinearDomain(n, plus=True):
-    S = generateDomain(n, Domain.LINEAR)
+def generate(n, domain=Domain.LINEAR, plus=True):
 
-    initialProj = generateDensityMatrixFromQubits([Zero, Zero])
-    initialProjs = [initialProj for _ in range(n - 1)]
+    S = generateDomain(n, domain)
 
-    if plus:
-    # |a|^2 >= 0.5
-        initialObsvPlusZero = generateDensityMatrixFromQubits([Plus, Zero])
-        initialObsvPlusPlus = generateDensityMatrixFromQubits([Plus, Plus])
-        initialObsvs = [initialObsvPlusZero] + [initialObsvPlusPlus for _ in range(n - 2)]
+    if domain == Domain.LINEAR:
+        initialProj = generateDensityMatrixFromQubits([Zero, Zero])
+        initialProjs = [initialProj for _ in range(n - 1)]
+
+        if plus:
+        # |a|^2 >= 0.5
+            initialObsvPlusZero = generateDensityMatrixFromQubits([Plus, Zero])
+            initialObsvPlusPlus = generateDensityMatrixFromQubits([Plus, Plus])
+            initialObsvs = [initialObsvPlusZero] + [initialObsvPlusPlus for _ in range(n - 2)]
+        else:
+            # |a|^2 <= 0.5
+            initialObsvMinusZero = generateDensityMatrixFromQubits([Minus, Zero])
+            initialObsvMinusMinus = generateDensityMatrixFromQubits([Minus, Minus])
+            initialObsvs = [initialObsvMinusZero] + [initialObsvMinusMinus for _ in range(n - 2)]
     else:
-        # |a|^2 <= 0.5
-        initialObsvMinusZero = generateDensityMatrixFromQubits([Minus, Zero])
-        initialObsvMinusMinus = generateDensityMatrixFromQubits([Minus, Minus])
-        initialObsvs = [initialObsvMinusZero] + [initialObsvMinusMinus for _ in range(n - 2)]
+        raise NotImplementedError
 
     initialState = AbstractState(n, S, initialProjs, initialObsvs)
 
