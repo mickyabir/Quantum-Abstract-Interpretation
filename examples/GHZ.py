@@ -1,21 +1,16 @@
 import numpy as np
 
 from gates import *
-from objective import *
 from states import *
 
-from abstractReasoning import abstractReasoningStep, validateFinalInequality
 from abstractState import AbstractState, Domain, generateDomain
-from prover import Prover
 
 def computeInequality(obsA, obsB):
-    zVec = np.array([1, 0], dtype=complex)
-    zzVec = np.kron(zVec, zVec)
+    zzVec = generateTensorState([Zero, Zero])
     zzVecLeft = zzVec.reshape((1, 4))
     zzVecRight = zzVec.reshape((4, 1))
 
-    oVec = np.array([0, 1], dtype=complex)
-    ooVec = np.kron(oVec, oVec)
+    ooVec = generateTensorState([One, One])
     ooVecLeft = ooVec.reshape((1, 4))
     ooVecRight = ooVec.reshape((4, 1))
 
@@ -58,21 +53,22 @@ def generate(n, domain=Domain.LINEAR, plus=True):
 
     initialState = AbstractState(n, S, initialProjs, initialObsvs)
 
-    prover = Prover(initialState)
-    prover.addOp(H, [0])
+    ops = []
+    ops.append([H, [0]])
 
     for i in range(1, n):
-        prover.addOp(CNOT, [0, i])
+        ops.append([CNOT, [0, i]])
 
-    import random
     for i in range(n):
-            prover.addOp(T, [i])
+            ops.append([T, [i]])
 
-    import pdb
-    pdb.set_trace()
+    return initialState, ops
+
+def proof(prover):
     while prover.apply():
         continue
 
     prover.validate()
-    computeInequality(initialObsvs, prover.currentState.observables)
 
+    initialObsvs = prover.initialState.observables
+    computeInequality(initialObsvs, prover.currentState.observables)

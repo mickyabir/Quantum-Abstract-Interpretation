@@ -2,11 +2,11 @@ from abstractReasoning import abstractReasoningStep, validateFinalInequality
 from pprint import pprint
 
 class Prover():
-    def __init__(self, initialState):
+    def __init__(self, initialState, ops):
         self.initialState = initialState
         self.currentState = initialState
         self.states = [initialState]
-        self.operations = []
+        self.operations = ops
         self.opPos = 0
 
     def getCurrentOp(self):
@@ -20,9 +20,6 @@ class Prover():
         if self.opPos <= 0:
             return self.operations[0]
         return self.operations[self.opPos - 1]
-
-    def addOp(self, U, F):
-        self.operations.append([U, F])
 
     #TODO: allow adding contraints
     def apply(self, objectiveFunction=None, constraints=None):

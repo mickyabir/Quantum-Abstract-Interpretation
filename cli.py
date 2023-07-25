@@ -3,9 +3,7 @@ from pprint import pprint
 from prover import Prover
 
 def session(initialState, ops):
-    prover = Prover(initialState)
-    for op in ops:
-        prover.addOp(*op)
+    prover = Prover(initialState, ops)
 
     displayProj = False
     displayObsv = False

@@ -3,9 +3,7 @@ import numpy as np
 from gates import *
 from states import *
 
-from abstractReasoning import abstractReasoningStep
 from abstractState import AbstractState, Domain, generateDomain
-from prover import Prover
 
 def generate(n, domain=Domain.SINGLE):
     S = generateDomain(n, domain)
@@ -25,15 +23,18 @@ def generate(n, domain=Domain.SINGLE):
 
     initialState = AbstractState(n, S, initialProjs, initialObsvs)
 
-    prover = Prover(initialState)
+    ops = []
 
     for i in range(n):
-        prover.addOp(H, [i])
+        ops.append([H, [i]])
             
         for j in range(2, n - i):
             controlPhaseGate = generateControlPhaseGate(j)
-            prover.addOp(controlPhaseGate, [i, i + j - 1])
+            ops.append([controlPhaseGate, [i, i + j - 1]])
 
+    return initialState, ops
+
+def proof(prover):
     while prover.apply():
         continue
 
