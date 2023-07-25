@@ -9,15 +9,28 @@ class Prover():
         self.operations = []
         self.opPos = 0
 
+    def getCurrentOp(self):
+        if self.opPos < len(self.operations):
+            U, F = self.operations[self.opPos]
+        else:
+            U, F = None, None
+        return U, F
+
+    def getPrevOp(self):
+        if self.opPos <= 0:
+            return self.operations[0]
+        return self.operations[self.opPos - 1]
+
     def addOp(self, U, F):
         self.operations.append([U, F])
 
-    def apply(self, proofRule=None):
+    #TODO: allow adding contraints
+    def apply(self, objectiveFunction=None, constraints=None):
         if self.opPos >= len(self.operations):
             return False
 
         U, F = self.operations[self.opPos]
-        self.currentState = abstractReasoningStep(self.currentState, U, F)
+        self.currentState = abstractReasoningStep(self.currentState, U, F, objectiveFunction)
         self.states.append(self.currentState)
         self.opPos += 1
 
@@ -36,6 +49,7 @@ class Prover():
         print(self.currentState)
 
     def proj(self, pos):
+        print('Projections:\n')
         if type(pos) == int:
             print(self.currentState.S[pos])
             pprint(self.currentState.projections[pos])
@@ -49,6 +63,7 @@ class Prover():
                     print()
                     
     def obsv(self, pos):
+        print('Observables:\n')
         if type(pos) == int:
             print(self.currentState.S[pos])
             pprint(self.currentState.observables[pos])

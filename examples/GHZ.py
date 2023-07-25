@@ -1,6 +1,7 @@
 import numpy as np
 
 from gates import *
+from objective import *
 from states import *
 
 from abstractReasoning import abstractReasoningStep, validateFinalInequality
@@ -67,6 +68,8 @@ def generate(n, domain=Domain.LINEAR, plus=True):
     for i in range(n):
             prover.addOp(T, [i])
 
+    import pdb
+    pdb.set_trace()
     while prover.apply():
         continue
 

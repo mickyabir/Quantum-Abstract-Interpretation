@@ -95,7 +95,7 @@ def verifyOrFixUnitRule(stateP, stateQ, U, F):
         stateQ.observables[idx] = np.identity(stateQ.observables[idx].shape[0], dtype=complex)
 
 # Updates the observables of stateQ according to the Unit Rule
-def applyUnitRule(stateP, stateQ, U, F):
+def applyUnitRule(stateP, stateQ, U, F, objectiveFunction):
     fullDomain, domainIndices = getFullDomain(stateP, F)
     forwardMap = {fullDomain[i]:i for i in range(len(fullDomain))}
 
@@ -110,11 +110,11 @@ def applyUnitRule(stateP, stateQ, U, F):
 
     constraintLHS = getUnitRuleLHS(stateP, F)
 
-    solveUnitRuleConstraints(constraintLHS, stateQ, fullDomain, domainIndices, gammaP, U, F)
+    solveUnitRuleConstraints(constraintLHS, stateQ, fullDomain, domainIndices, gammaP, U, F, objectiveFunction)
 
-def abstractReasoningStep(state, U, F):
+def abstractReasoningStep(state, U, F, objectiveFunction):
     evolvedAbstractState = abstractStep(state, U, F)
-    applyUnitRule(state, evolvedAbstractState, U, F)
+    applyUnitRule(state, evolvedAbstractState, U, F, objectiveFunction)
 
     if any(obs is None for obs in evolvedAbstractState.observables):
         # Try to fill in missing observables with previous the observables

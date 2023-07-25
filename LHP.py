@@ -9,7 +9,7 @@ if __name__ == '__main__':
     import sys
     np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
 
-    n = 20
+    n = 3
     GHZ.generate(n)
     GHZ.generate(n, plus=False)
     # GHZ.generate(n)
