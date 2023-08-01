@@ -17,7 +17,7 @@ def generateMiller():
     # initialState = AbstractState(n, S, [initialProj for _ in range(n - 1)], [initialObsv for _ in range(n-1)])
 
     # FULL ABSTRACT DOMAIN
-    S = [{0, 1, 2}]
+    S = [[0, 1, 2]]
     initialProj = generateDensityMatrixFromQubits([Zero, Zero, Zero])
     initialObsv = generateDensityMatrixFromQubits([Plus, Plus, Plus])
     initialState = AbstractState(n, S, [initialProj], [initialObsv])

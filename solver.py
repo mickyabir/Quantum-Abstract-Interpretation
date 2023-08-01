@@ -34,6 +34,11 @@ def solveUnitRuleConstraints(constraintLHS, state, fullDomain, domainIndices, ga
         constraintMatrixIdentity = generatePSDConstraint(M)
         constraints.append(constraintMatrixIdentity >= 0)
 
+        # B_i <= Q_i
+        M = state.projections[i] - state.observables[i]
+        constraintMatrixIdentity = generatePSDConstraint(M)
+        constraints.append(constraintMatrixIdentity >= 0)
+
         # 0 <= B_i
         M = state.observables[i]
         constraintMatrixPSD = generatePSDConstraint(M)

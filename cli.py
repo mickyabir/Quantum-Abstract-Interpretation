@@ -2,7 +2,7 @@ from objective import objectiveFunctionMap
 from pprint import pprint
 from prover import Prover
 
-def session(initialState, ops):
+def session(initialState, ops, config):
     prover = Prover(initialState, ops)
 
     displayProj = False
