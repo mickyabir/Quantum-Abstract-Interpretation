@@ -99,7 +99,7 @@ def applyUnitRule(stateP, stateQ, U, F, objectiveFunction):
     fullDomain, domainIndices = getFullDomain(stateP, F)
     forwardMap = {fullDomain[i]:i for i in range(len(fullDomain))}
 
-    if len(F) == 1:
+    if len(domainIndices) == 1:
         applyForwardMap = lambda S: [forwardMap[si] for si in S]
         mappedF = applyForwardMap(F)
         U_F = expandUnitary(U, len(fullDomain), mappedF)

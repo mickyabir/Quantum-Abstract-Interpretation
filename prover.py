@@ -1,13 +1,15 @@
 from abstractReasoning import abstractReasoningStep, validateFinalInequality
+from constraintsUtil import getFullDomain
 from pprint import pprint
 
 class Prover():
-    def __init__(self, initialState, ops):
+    def __init__(self, initialState, ops, lemmas):
         self.initialState = initialState
         self.currentState = initialState
         self.states = [initialState]
         self.operations = ops
         self.opPos = 0
+        self.lemmas = lemmas
 
     def getCurrentOp(self):
         if self.opPos < len(self.operations):
@@ -32,6 +34,17 @@ class Prover():
         self.opPos += 1
 
         return True
+
+    def lemma(self, lemmaName):
+        U, F = self.operations[self.opPos]
+        _, domainIndices = getFullDomain(self.currentState, F)
+        n = self.currentState.n
+        workingSet = [self.currentState.observables[i] for i in domainIndices]
+        lemmaApplied = self.lemmas[lemmaName](n, workingSet)
+        if lemmaApplied:
+            self.currentState = abstractReasoningStep(self.currentState, U, F, objectiveFunction)
+            self.states.append(self.currentState)
+            self.opPos += 1
 
     def backtrack(self):
         # Can't backtrack past initial state

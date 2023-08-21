@@ -20,9 +20,10 @@ if __name__ == '__main__':
     # prover = Prover(initialState, ops)
     # GHZ.proof(prover)
 
-    initialState, ops = Miller.generateMiller()
-    prover = Prover(initialState, ops)
-    Miller.proof(prover)
+    # initialState, ops = Miller.generateMiller(3)
+    # prover = Prover(initialState, ops)
+    # Miller.proof(prover)
+    Miller.proof(None)
 
     # initialState, ops = QFT.generate(n, domain=Domain.SINGLE)
     # prover = Prover(initialState, ops)

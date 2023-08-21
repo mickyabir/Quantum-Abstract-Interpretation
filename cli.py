@@ -2,8 +2,8 @@ from objective import objectiveFunctionMap
 from pprint import pprint
 from prover import Prover
 
-def session(initialState, ops, config):
-    prover = Prover(initialState, ops)
+def session(initialState, ops, lemmas, config):
+    prover = Prover(initialState, ops, lemmas)
 
     displayProj = False
     displayObsv = False
@@ -32,13 +32,17 @@ def session(initialState, ops, config):
 
             objectiveFunction = objectiveFunctionMap.get(objectiveFunctionName)
 
-            if not prover.apply(objectiveFunction):
-                print('Done')
-            else:
-                if displayProj:
-                    prover.proj(F)
-                if displayObsv:
-                    prover.obsv(F)
+            try:
+                if not prover.apply(objectiveFunction):
+                    print('Done')
+                else:
+                    if displayProj:
+                        prover.proj(F)
+                    if displayObsv:
+                        prover.obsv(F)
+            except:
+                # prover.backtrack()
+                print('Cannot apply this objective function')
         elif cmd in ['b', 'backtrack']:
             _, F = prover.getPrevOp()
             prover.backtrack()
@@ -46,6 +50,10 @@ def session(initialState, ops, config):
                 prover.proj(F)
             if displayObsv:
                 prover.obsv(F)
+        elif cmd in ['l', 'lemma']:
+            if len(userInput) > 1:
+                lemmaName = userInput[1]
+                prover.lemma(lemmaName)
         elif cmd in ['o', 'op']:
             U, F = prover.getCurrentOp()
             if U is not None and F is not None:

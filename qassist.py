@@ -7,12 +7,12 @@ class Program():
         self.initialState = AbstractState(n, S, initialProjs, initialObsvs)
         self.ops = ops
 
-def prove(n, generator, proof, config):
+def prove(n, generator, proof, lemmas, config):
     prog = generator(n, config)
-    prover = Prover(prog.initialState, prog.ops)
+    prover = Prover(prog.initialState, prog.ops, lemmas)
     proof(prover)
 
-def interactive(n, generator, config):
+def interactive(n, generator, lemmas, config):
     prog = generator(n, config)
-    session(prog.initialState, prog.ops, config)
+    session(prog.initialState, prog.ops, lemmas, config)
 
