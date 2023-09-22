@@ -10,7 +10,7 @@ if __name__ == '__main__':
     import sys
     np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
 
-    n = 3
+    n = 10
 
     # initialState, ops = GHZ.generate(n)
     # prover = Prover(initialState, ops)
@@ -23,11 +23,11 @@ if __name__ == '__main__':
     # initialState, ops = Miller.generateMiller(3)
     # prover = Prover(initialState, ops)
     # Miller.proof(prover)
-    Miller.proof(None)
+    # Miller.proof(None)
 
-    # initialState, ops = QFT.generate(n, domain=Domain.SINGLE)
-    # prover = Prover(initialState, ops)
-    # QFT.proof(prover)
+    initialState, ops = QFT.generate(n, domain=Domain.SINGLE)
+    prover = Prover(initialState, ops, None)
+    QFT.proof(prover)
 
     # initialState, ops = QFT.generate(n, domain=Domain.LINEAR)
     # prover = Prover(initialState, ops)

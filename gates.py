@@ -8,11 +8,14 @@ X = np.array([[0, 1],[1, 0]], dtype=complex)
 CNOT = np.array([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
 CNOT10 = np.array([[1, 0, 0, 0],[0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0]], dtype=complex)
 
-def generatePhaseGate(m):
-    return np.array([[1, 0], [0, np.exp(2 * np.pi * 1j / (2 ** m))]], dtype=complex)
+def generatePhaseGate(m, inverse=False):
+    if inverse:
+        return np.array([[1, 0], [0, np.exp(-2 * np.pi * 1j / (2 ** m))]], dtype=complex)
+    else:
+        return np.array([[1, 0], [0, np.exp(2 * np.pi * 1j / (2 ** m))]], dtype=complex)
 
-def generateControlPhaseGate(m):
-    phaseGate = generatePhaseGate(m)
+def generateControlPhaseGate(m, inverse=False):
+    phaseGate = generatePhaseGate(m, inverse)
 
     zeroZero = np.array([[1, 0], [0, 0]], dtype=complex)
     oneOne = np.array([[0, 0], [0, 1]], dtype=complex)

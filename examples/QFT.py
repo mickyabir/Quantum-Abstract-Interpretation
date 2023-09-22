@@ -5,7 +5,7 @@ from states import *
 
 from abstractState import AbstractState, Domain, generateDomain
 
-def generate(n, domain=Domain.SINGLE):
+def generate(n, domain=Domain.SINGLE, inverse=False):
     S = generateDomain(n, domain)
 
     if domain == Domain.SINGLE:
@@ -28,9 +28,12 @@ def generate(n, domain=Domain.SINGLE):
     for i in range(n):
         ops.append([H, [i]])
             
-        for j in range(2, n - i):
-            controlPhaseGate = generateControlPhaseGate(j)
+        for j in range(2, n - i + 1):
+            controlPhaseGate = generateControlPhaseGate(j, inverse)
             ops.append([controlPhaseGate, [i, i + j - 1]])
+
+    if inverse:
+        ops = ops[::-1]
 
     return initialState, ops
 
