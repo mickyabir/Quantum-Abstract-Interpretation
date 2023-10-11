@@ -1,3 +1,5 @@
+import qassist
+
 import numpy as np
 
 from abstractReasoning import abstractReasoningStep, validateFinalInequality
@@ -10,25 +12,13 @@ if __name__ == '__main__':
     import sys
     np.set_printoptions(precision=3, suppress=True, threshold=sys.maxsize)
 
-    n = 10
+    n = 3
 
-    # initialState, ops = GHZ.generate(n)
-    # prover = Prover(initialState, ops)
-    # GHZ.proof(prover)
-    # 
-    # initialState, ops = GHZ.generate(n, plus=False)
-    # prover = Prover(initialState, ops)
-    # GHZ.proof(prover)
+    qassist.prove(n, GHZ.generate, GHZ.proof, None, config={'plus':True})
+    # qassist.interactive(n, GHZ.generate, None, config={'plus':False})
 
-    # initialState, ops = Miller.generateMiller(3)
-    # prover = Prover(initialState, ops)
-    # Miller.proof(prover)
-    # Miller.proof(None)
+    # qassist.prove(n, Miller.generate, Miller.proof, None, config={})
+    # qassist.interactive(n, Miller.generate, None, config={})
 
-    initialState, ops = QFT.generate(n, domain=Domain.SINGLE)
-    prover = Prover(initialState, ops, None)
-    QFT.proof(prover)
-
-    # initialState, ops = QFT.generate(n, domain=Domain.LINEAR)
-    # prover = Prover(initialState, ops)
-    # QFT.proof(prover)
+    # qassist.prove(n, QFT.generate, QFT.proof, None, config={})
+    # qassist.interactive(n, QFT.generate, None, config={})

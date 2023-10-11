@@ -1,3 +1,5 @@
+import qassist
+
 import numpy as np
 
 from gates import *
@@ -30,28 +32,33 @@ def computeInequality(obsA, obsB):
     print(f'|a|^2 {b00eq} {bound00}')
     print(f'|b|^2 {b11eq} {bound11}')
 
-def generate(n, domain=Domain.LINEAR, plus=True):
+def generate(n, config):
+    domain = config.get('domain')
+    plus = config.get('plus')
+
+    if domain is None:
+        domain = Domain.LINEAR
+
+    if plus is None:
+        plus = True
 
     S = generateDomain(n, domain)
-
     if domain == Domain.LINEAR:
         initialProj = generateDensityMatrixFromQubits([Zero, Zero])
-        initialProjs = [initialProj for _ in range(n - 1)]
+        initialProjs = [initialProj for _ in range(n)]
 
         if plus:
         # |a|^2 >= 0.5
             initialObsvPlusZero = generateDensityMatrixFromQubits([Plus, Zero])
             initialObsvPlusPlus = generateDensityMatrixFromQubits([Plus, Plus])
-            initialObsvs = [initialObsvPlusZero] + [initialObsvPlusPlus for _ in range(n - 2)]
+            initialObsvs = [initialObsvPlusZero] + [initialObsvPlusPlus for _ in range(n - 1)]
         else:
             # |a|^2 <= 0.5
             initialObsvMinusZero = generateDensityMatrixFromQubits([Minus, Zero])
             initialObsvMinusMinus = generateDensityMatrixFromQubits([Minus, Minus])
-            initialObsvs = [initialObsvMinusZero] + [initialObsvMinusMinus for _ in range(n - 2)]
+            initialObsvs = [initialObsvMinusZero] + [initialObsvMinusMinus for _ in range(n - 1)]
     else:
         raise NotImplementedError
-
-    initialState = AbstractState(n, S, initialProjs, initialObsvs)
 
     ops = []
     ops.append([H, [0]])
@@ -62,10 +69,11 @@ def generate(n, domain=Domain.LINEAR, plus=True):
     for i in range(n):
             ops.append([T, [i]])
 
-    return initialState, ops
+    return qassist.Program(n, S, initialProjs, initialObsvs, ops)
 
 def proof(prover):
     while prover.apply():
+        prover.print()
         continue
 
     prover.validate()

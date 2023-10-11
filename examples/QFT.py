@@ -1,3 +1,5 @@
+import qassist
+
 import numpy as np
 
 from gates import *
@@ -5,7 +7,15 @@ from states import *
 
 from abstractState import AbstractState, Domain, generateDomain
 
-def generate(n, domain=Domain.SINGLE, inverse=False):
+def generate(n, config):
+    domain = config.get('domain')
+    inverse = config.get('inverse')
+
+    if not domain:
+        domain = Domain.SINGLE
+    if not inverse:
+        inverse = False
+
     S = generateDomain(n, domain)
 
     if domain == Domain.SINGLE:
@@ -21,8 +31,6 @@ def generate(n, domain=Domain.SINGLE, inverse=False):
     else:
         raise NotImplementedError
 
-    initialState = AbstractState(n, S, initialProjs, initialObsvs)
-
     ops = []
 
     for i in range(n):
@@ -35,7 +43,7 @@ def generate(n, domain=Domain.SINGLE, inverse=False):
     if inverse:
         ops = ops[::-1]
 
-    return initialState, ops
+    return qassist.Program(n, S, initialProjs, initialObsvs, ops)
 
 def proof(prover):
     while prover.apply():

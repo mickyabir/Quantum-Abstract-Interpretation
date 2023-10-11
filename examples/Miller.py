@@ -6,27 +6,27 @@ from states import *
 
 from abstractState import AbstractState
 
-def generateMiller(n, config={}):
+def generate(n, config={}):
     n = 3
 
     S = []
-    # #for i in range(n - 1):
-    # #  S.append([i, i + 1])
-    # S = [[0,1], [1,2], [0,2]]
+    #for i in range(n - 1):
+    #  S.append([i, i + 1])
+    S = [[0,1], [1,2], [0,2]]
 
-    # initialProj = generateDensityMatrixFromQubits([Zero, Zero])
-    # initialObsv = generateDensityMatrixFromQubits([Plus, Plus])
-    # # initialProjs = [initialProj for _ in range(n - 1)]
-    # # initialObsvs = [initialObsv for _ in range(n - 1)]
-    # initialProjs = [initialProj for _ in range(3)]
-    # initialObsvs = [initialObsv for _ in range(3)]
+    initialProj = generateDensityMatrixFromQubits([Zero, Zero])
+    initialObsv = generateDensityMatrixFromQubits([Plus, Plus])
+    # initialProjs = [initialProj for _ in range(n - 1)]
+    # initialObsvs = [initialObsv for _ in range(n - 1)]
+    initialProjs = [initialProj for _ in range(3)]
+    initialObsvs = [initialObsv for _ in range(3)]
 
     # FULL ABSTRACT DOMAIN
-    S = [[0, 1, 2]]
-    initialProj = generateDensityMatrixFromQubits([Zero, Zero, Zero])
-    initialObsv = generateDensityMatrixFromQubits([Plus, Plus, Plus])
-    initialProjs = [initialProj]
-    initialObsvs = [initialObsv]
+    # S = [[0, 1, 2]]
+    # initialProj = generateDensityMatrixFromQubits([Zero, Zero, Zero])
+    # initialObsv = generateDensityMatrixFromQubits([Plus, Plus, Plus])
+    # initialProjs = [initialProj]
+    # initialObsvs = [initialObsv]
 
     ops = []
     ops.append([CNOT10, [1, 2]])
@@ -90,13 +90,6 @@ def lemma1(n, observables):
     return None
 
 def proof(prover):
-    lemmas = {'lemma1': lemma1}
-    n = 3
-    generator = generateMiller
-    config = {}
-    qassist.interactive(n, generator, lemmas, config)
-    return
-
     while prover.apply():
         continue
 

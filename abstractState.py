@@ -15,7 +15,7 @@ def generateDomain(n, domain=Domain.LINEAR):
         for i in range(n - 1):
             S.append([i, i + 1])
 
-        return S
+        return S + [[0, n - 1]]
     else:
         raise NotImplementedError
 
