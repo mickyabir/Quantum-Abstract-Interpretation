@@ -71,12 +71,16 @@ def fullDomainProjectionExpansion(fullDomain, state, forwardMap):
                 projectionIntersectionList.append(expandedProjection)
     return intersectProjections(projectionIntersectionList, fullDomain)
 
-def fullDomainObservableExpansion(fullDomain, domainIndices, state, forwardMap, backend=np):
-    applyForwardMap = lambda S: [forwardMap[si] for si in S]
+def fullDomainObservableExpansion(fullDomain, domainIndices, state, forwardMap=None, backend=np):
+    if forwardMap is not None:
+        applyForwardMap = lambda S: [forwardMap[si] for si in S]
 
     M_A = None
     for i in domainIndices:
-        F = applyForwardMap(state.S[i])
+        if forwardMap is not None:
+            F = applyForwardMap(state.S[i])
+        else:
+            F = state.S[i]
         expandedObservable = expandUnitary(state.observables[i], len(fullDomain), F, backend=backend)
 
         if M_A is None:

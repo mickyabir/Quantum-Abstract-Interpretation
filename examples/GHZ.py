@@ -6,6 +6,7 @@ from gates import *
 from states import *
 
 from abstractState import AbstractState, Domain, generateDomain
+from util import computeSubspaceProjection
 
 def computeInequality(obsA, obsB):
     zzVec = generateTensorState([Zero, Zero])
@@ -35,6 +36,7 @@ def computeInequality(obsA, obsB):
 def generate(n, config):
     domain = config.get('domain')
     plus = config.get('plus')
+    noisy = config.get('noisy')
 
     if domain is None:
         domain = Domain.LINEAR
@@ -60,14 +62,25 @@ def generate(n, config):
     else:
         raise NotImplementedError
 
+    eps = 0.000001
+
+    if noisy is not None and noisy:
+        H_gate = generateNaiveNoisyGate(H, eps)
+        CNOT_gate = generateNaiveNoisyGate(CNOT, eps)
+        T_gate = generateNaiveNoisyGate(T, eps)
+    else:
+        H_gate = H
+        CNOT_gate = CNOT
+        T_gate = T
+
     ops = []
-    ops.append([H, [0]])
+    ops.append([H_gate, [0]])
 
     for i in range(1, n):
-        ops.append([CNOT, [0, i]])
+        ops.append([CNOT_gate, [0, i]])
 
     for i in range(n):
-            ops.append([T, [i]])
+            ops.append([T_gate, [i]])
 
     return qassist.Program(n, S, initialProjs, initialObsvs, ops)
 
@@ -80,3 +93,7 @@ def proof(prover):
 
     initialObsvs = prover.initialState.observables
     computeInequality(initialObsvs, prover.currentState.observables)
+
+    psi, bound = computeSubspaceProjection(prover.initialState, prover.currentState)
+    print(psi)
+    print(bound)

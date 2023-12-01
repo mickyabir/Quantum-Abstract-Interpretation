@@ -6,7 +6,7 @@ from abstractReasoning import abstractReasoningStep, validateFinalInequality
 from abstractState import AbstractState, Domain
 from prover import Prover
 
-from examples import GHZ, Miller, QFT
+from examples import GHZ, Miller, QFT, QPE
 
 if __name__ == '__main__':
     import sys
@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     n = 3
 
-    qassist.prove(n, GHZ.generate, GHZ.proof, None, config={'plus':True})
+    # qassist.prove(n, GHZ.generate, GHZ.proof, None, config={'plus':True, 'noisy':False})
     # qassist.interactive(n, GHZ.generate, None, config={'plus':False})
 
     # qassist.prove(n, Miller.generate, Miller.proof, None, config={})
@@ -22,3 +22,5 @@ if __name__ == '__main__':
 
     # qassist.prove(n, QFT.generate, QFT.proof, None, config={})
     # qassist.interactive(n, QFT.generate, None, config={})
+
+    qassist.prove(1, QPE.generate, QPE.proof, None)

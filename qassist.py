@@ -7,8 +7,11 @@ class Program():
         self.initialState = AbstractState(n, S, initialProjs, initialObsvs)
         self.ops = ops
 
-def prove(n, generator, proof, lemmas, config):
-    prog = generator(n, config)
+def prove(n, generator, proof, lemmas, config=None):
+    if config is not None:
+        prog = generator(n, config)
+    else:
+        prog = generator(n)
     prover = Prover(prog.initialState, prog.ops, lemmas)
     proof(prover)
 
