@@ -23,4 +23,4 @@ if __name__ == '__main__':
     # qassist.prove(n, QFT.generate, QFT.proof, None, config={})
     # qassist.interactive(n, QFT.generate, None, config={})
 
-    qassist.prove(1, QPE.generate, QPE.proof, None)
+    qassist.proveMiddle(1, QPE.generateFront, QPE.generateBack, QPE.proof, None)

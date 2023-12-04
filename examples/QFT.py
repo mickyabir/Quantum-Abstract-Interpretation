@@ -40,6 +40,10 @@ def generate(n, config):
             controlPhaseGate = generateControlPhaseGate(j, inverse)
             ops.append([controlPhaseGate, [i, i + j - 1]])
 
+
+    for i in range(int(np.floor(n / 2))):
+        ops.append([SWAP, [i, n - i - 1]])
+
     if inverse:
         ops = ops[::-1]
 
